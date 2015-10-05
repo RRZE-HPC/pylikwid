@@ -68,7 +68,6 @@ likwid_getregion(PyObject *self, PyObject *args)
     PyObject *pyList, *pyValue;
     if (!PyArg_ParseTuple(args, "s", &regiontag))
         return NULL;
-    
     currentGroup = perfmon_getIdOfActiveGroup();
     nr_events = perfmon_getNumberOfEvents(currentGroup);
     events = (double*) malloc(nr_events * sizeof(double));
@@ -81,13 +80,11 @@ likwid_getregion(PyObject *self, PyObject *args)
         events[i] = 0.0;
     }
     pyLen = (Py_ssize_t)nr_events;
-    pyList = PyList_New(nr_events);
-
+    pyList = PyList_New(pyLen);
     likwid_markerGetRegion(regiontag, &nr_events, events, &time, &count);
     for (i=0; i< nr_events; i++)
     {
-        pyValue = Py_BuildValue("d", events[i]);
-        PyList_Append(pyList, pyValue);
+        PyList_SET_ITEM(pyList, (Py_ssize_t)i, Py_BuildValue("d", events[i]));
     }
     free(events);
     return Py_BuildValue("iOdi", nr_events, pyList, time, count);
