@@ -1,5 +1,5 @@
 # likwid-python-api
-Python interface for the Marker API of LIKWID (https://github.com/rrze-likwid/likwid)
+Python interface for the Marker API of LIKWID (https://github.com/RRZE-HPC/likwid)
 
 # Installation
 Adjust paths and python version in Makefile and type make.
