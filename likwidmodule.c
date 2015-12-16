@@ -5,21 +5,21 @@
 
 
 static PyObject *
-likwid_init(PyObject *self, PyObject *args)
+likwid_markerinit(PyObject *self, PyObject *args)
 {
     likwid_markerInit();
     Py_RETURN_NONE;
 }
 
 static PyObject *
-likwid_threadinit(PyObject *self, PyObject *args)
+likwid_markerthreadinit(PyObject *self, PyObject *args)
 {
     likwid_markerThreadInit();
     Py_RETURN_NONE;
 }
 
 static PyObject *
-likwid_registerregion(PyObject *self, PyObject *args)
+likwid_markerregisterregion(PyObject *self, PyObject *args)
 {
     const char *regiontag;
     int ret;
@@ -31,7 +31,7 @@ likwid_registerregion(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-likwid_startregion(PyObject *self, PyObject *args)
+likwid_markerstartregion(PyObject *self, PyObject *args)
 {
     const char *regiontag;
     int ret;
@@ -43,7 +43,7 @@ likwid_startregion(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-likwid_stopregion(PyObject *self, PyObject *args)
+likwid_markerstopregion(PyObject *self, PyObject *args)
 {
     const char *regiontag;
     int ret;
@@ -55,7 +55,7 @@ likwid_stopregion(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-likwid_getregion(PyObject *self, PyObject *args)
+likwid_markergetregion(PyObject *self, PyObject *args)
 {
     int i;
     int currentGroup = 0;
@@ -91,28 +91,58 @@ likwid_getregion(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-likwid_nextgroup(PyObject *self, PyObject *args)
+likwid_markernextgroup(PyObject *self, PyObject *args)
 {
     likwid_markerNextGroup();
     Py_RETURN_NONE;
 }
 
 static PyObject *
-likwid_close(PyObject *self, PyObject *args)
+likwid_markerclose(PyObject *self, PyObject *args)
 {
     likwid_markerClose();
     Py_RETURN_NONE;
 }
 
+
+static PyObject *
+likwid_getprocessorid(PyObject *self, PyObject *args)
+{
+    return Py_BuildValue("i", likwid_getProcessorId());
+}
+
+static PyObject *
+likwid_pinprocess(PyObject *self, PyObject *args)
+{
+    int cpuid, ret;
+    if (!PyArg_ParseTuple(args, "i", &cpuid))
+        return NULL;
+    ret = likwid_pinProcess(cpuid);
+    return Py_BuildValue("i", ret);
+}
+
+static PyObject *
+likwid_pinthread(PyObject *self, PyObject *args)
+{
+    int cpuid, ret;
+    if (!PyArg_ParseTuple(args, "i", &cpuid))
+        return NULL;
+    ret = likwid_pinThread(cpuid);
+    return Py_BuildValue("i", ret);
+}
+
 static PyMethodDef LikwidMethods[] = {
-    {"init", likwid_init, METH_VARARGS, "Initialize the LIKWID Marker API."},
-    {"threadinit", likwid_threadinit, METH_VARARGS, "Initialize threads for the LIKWID Marker API."},
-    {"registerregion", likwid_registerregion, METH_VARARGS, "Register a region to the LIKWID Marker API. Optional"},
-    {"startregion", likwid_startregion, METH_VARARGS, "Start a code region."},
-    {"stopregion", likwid_stopregion, METH_VARARGS, "Stop a code region."},
-    {"getregion", likwid_getregion, METH_VARARGS, "Get the current results for a code region."},
-    {"nextgroup", likwid_nextgroup, METH_VARARGS, "Switch to next event set."},
-    {"close", likwid_close, METH_VARARGS, "Close the Marker API and write results to file."},
+    {"markerinit", likwid_markerinit, METH_VARARGS, "Initialize the LIKWID Marker API."},
+    {"markerthreadinit", likwid_markerthreadinit, METH_VARARGS, "Initialize threads for the LIKWID Marker API."},
+    {"markerregisterregion", likwid_markerregisterregion, METH_VARARGS, "Register a region to the LIKWID Marker API. Optional"},
+    {"markerstartregion", likwid_markerstartregion, METH_VARARGS, "Start a code region."},
+    {"markerstopregion", likwid_markerstopregion, METH_VARARGS, "Stop a code region."},
+    {"markergetregion", likwid_markergetregion, METH_VARARGS, "Get the current results for a code region."},
+    {"markernextgroup", likwid_markernextgroup, METH_VARARGS, "Switch to next event set."},
+    {"markerclose", likwid_markerclose, METH_VARARGS, "Close the Marker API and write results to file."},
+    {"getprocessorid", likwid_getprocessorid, METH_VARARGS, "Returns the current CPU ID."},
+    {"pinprocess", likwid_pinprocess, METH_VARARGS, "Pins the current process to the given CPU."},
+    {"pinthread", likwid_pinthread, METH_VARARGS, "Pins the current thread to the given CPU."},
     {NULL, NULL, 0, NULL}
 };
 
