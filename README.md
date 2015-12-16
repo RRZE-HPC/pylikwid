@@ -3,7 +3,7 @@ Python interface for the Marker API of LIKWID (https://github.com/rrze-likwid/li
 
 # Installation
 Adjust paths and python version in Makefile and type make.
-Copy the resulting `likwid.so` somewhere in your `PYTHONPATH` or extend the `PYTHONPATH` by the folder where likwid.so resides.
+Copy the resulting `likwid.so` somewhere in your `PYTHONPATH` or extend the `PYTHONPATH` by the folder where `likwid.so` resides.
 
 # Functions
 After `import likwid` you can call the following functions:
@@ -24,6 +24,12 @@ Get the intermediate results of the region identified by `regiontag`. On success
 Switch to the next event set in a round-robin fashion. If you have set only one event set on the command line, this function performs no operation.
 - `likwid.close()`:
 Close the connection to the LIKWID Marker API and write out measurement data to file. This file will be evaluated by `likwid-perfctr`.
+- `likwid.getprocessorid()`:
+Returns the ID of the currently executing CPU
+- `likwid.pinprocess(cpuid)`:
+Pins the current process to the CPU given as `cpuid`.
+- `likwid.pinthread(cpuid)`:
+Pins the current thread to the CPU given as `cpuid`.
 
 # Usage
 Here is a small example Python script how to use the LIKWID Marker API in Python:
