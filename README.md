@@ -1,9 +1,8 @@
 # likwid-python-api
-Python interface for the Marker API of LIKWID (https://github.com/RRZE-HPC/likwid)
+Python interface for the C API of LIKWID (https://github.com/RRZE-HPC/likwid)
 
 # Installation
-Adjust paths and python version in Makefile and type make.
-Copy the resulting `likwid.so` somewhere in your `PYTHONPATH` or extend the `PYTHONPATH` by the folder where `likwid.so` resides.
+I added a setup.py script for the installation. It builds the C module and copies it to the proper destination.
 
 # Functions
 After `import likwid` you can call the following functions:
@@ -30,6 +29,8 @@ Returns the ID of the currently executing CPU
 Pins the current process to the CPU given as `cpuid`.
 - `likwid.pinthread(cpuid)`:
 Pins the current thread to the CPU given as `cpuid`.
+
+Here a lot more are possible now.
 
 # Usage
 Here is a small example Python script how to use the LIKWID Marker API in Python:
