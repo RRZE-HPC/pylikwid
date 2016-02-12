@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 
-import likwid
+import pylikwid
 
 
-likwid.markerinit()
-likwid.markerthreadinit()
+pylikwid.markerinit()
+pylikwid.markerthreadinit()
 liste = []
-likwid.markerstartregion("liste")
+pylikwid.markerstartregion("liste")
 for i in range(0,1000000):
     liste.append(i)
 
-likwid.markerstopregion("liste")
-nr_events, elist, time, count = likwid.markergetregion("liste")
+pylikwid.markerstopregion("liste")
+nr_events, elist, time, count = pylikwid.markergetregion("liste")
 for i, e in enumerate(elist):
     print(i, e)
-likwid.markerclose()
+pylikwid.markerclose()

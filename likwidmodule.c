@@ -217,6 +217,8 @@ likwid_hpmfinalize(PyObject *self, PyObject *args)
 static PyObject *
 likwid_initconfiguration(PyObject *self, PyObject *args)
 {
+    if (config_initialized)
+        return Py_True;
     int ret = init_configuration();
     if (ret == 0)
     {
@@ -229,6 +231,8 @@ likwid_initconfiguration(PyObject *self, PyObject *args)
 static PyObject *
 likwid_destroyconfiguration(PyObject *self, PyObject *args)
 {
+    if (!config_initialized)
+        return Py_False;
     int ret = destroy_configuration();
     if (ret == 0)
     {
@@ -258,6 +262,7 @@ likwid_getconfiguration(PyObject *self, PyObject *args)
     PyDict_SetItem(d, PYSTR("configFileName"), PYSTR(configfile->configFileName));
     PyDict_SetItem(d, PYSTR("topologyCfgFileName"), PYSTR(configfile->topologyCfgFileName));
     PyDict_SetItem(d, PYSTR("daemonPath"), PYSTR(configfile->daemonPath));
+    PyDict_SetItem(d, PYSTR("groupPath"), PYSTR(configfile->groupPath));
     PyDict_SetItem(d, PYSTR("daemonMode"), PYINT(configfile->daemonMode));
     PyDict_SetItem(d, PYSTR("maxNumThreads"), PYINT(configfile->maxNumThreads));
     PyDict_SetItem(d, PYSTR("maxNumNodes"), PYINT(configfile->maxNumNodes));
@@ -794,15 +799,15 @@ likwid_getPowerInfo(PyObject *self, PyObject *args)
     }
     PyObject *n = PyDict_New();
     PyDict_SetItem(n, PYSTR("hasRAPL"), PYINT(power_hasRAPL));
-    PyDict_SetItem(n, PYSTR("baseFrequency"), PYINT(power->baseFrequency));
-    PyDict_SetItem(n, PYSTR("minFrequency"), PYINT(power->minFrequency));
+    PyDict_SetItem(n, PYSTR("baseFrequency"), Py_BuildValue("d", power->baseFrequency));
+    PyDict_SetItem(n, PYSTR("minFrequency"), Py_BuildValue("d", power->minFrequency));
     PyDict_SetItem(n, PYSTR("powerUnit"), Py_BuildValue("d", power->powerUnit));
     PyDict_SetItem(n, PYSTR("timeUnit"), Py_BuildValue("d", power->timeUnit));
     
     PyObject *l = PyList_New(power->turbo.numSteps);
     for (i=0; i<power->turbo.numSteps; i++)
     {
-        PyList_SET_ITEM(l, (Py_ssize_t)i, PYINT(power->turbo.steps[i]));
+        PyList_SET_ITEM(l, (Py_ssize_t)i, Py_BuildValue("d", power->turbo.steps[i]));
     }
     PyDict_SetItem(n, PYSTR("turbo"), l);
     PyObject *d = PyDict_New();
@@ -1343,7 +1348,7 @@ static PyObject *
 likwid_markerRegionResult(PyObject *self, PyObject *args)
 {
     int r, t, e;
-    PyArg_ParseTuple(args, "ii", &r, &e, &t);
+    PyArg_ParseTuple(args, "iii", &r, &e, &t);
     return Py_BuildValue("d", perfmon_getResultOfRegionThread(r, e, t));
 }
 
@@ -1351,7 +1356,7 @@ static PyObject *
 likwid_markerRegionMetric(PyObject *self, PyObject *args)
 {
     int r, t, m;
-    PyArg_ParseTuple(args, "ii", &r, &m, &t);
+    PyArg_ParseTuple(args, "iii", &r, &m, &t);
     return Py_BuildValue("d", perfmon_getMetricOfRegionThread(r, m, t));
 }
 
@@ -1404,7 +1409,6 @@ static PyMethodDef LikwidMethods[] = {
     {"startpower", likwid_startPower, METH_VARARGS, "Start a power measurement."},
     {"stoppower", likwid_stopPower, METH_VARARGS, "Stop a power measurement."},
     {"getpower", likwid_getPower, METH_VARARGS, "Get the energy information from a power measurement."},
-    {"", likwid_readTemp, METH_VARARGS, "Read current temperature."},
     /* perfmon functions */
     {"init", likwid_init, METH_VARARGS, "Initialize the whole Likwid system including Performance Monitoring module."},
     {"addeventset", likwid_addEventSet, METH_VARARGS, "Add an event set to LIKWID."},
