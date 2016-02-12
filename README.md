@@ -3,6 +3,17 @@ Python interface for the C API of LIKWID (https://github.com/RRZE-HPC/likwid)
 
 # Installation
 I added a setup.py script for the installation. It builds the C module and copies it to the proper destination.
+```
+$ tar -xjf likwid-python-api.tar.bz2
+$ cd likwid-python-api
+# Build C interface
+$ python setup.py build_ext -I <include path for likwid> -L <library path for likwid> -R <library path for likwid>
+# Install module to the proper location
+$ python setup.py install (--prefix=<where to install>)
+# Testing
+$ python -c "import pylikwid"
+$ ./testlib.py
+```
 
 # Functions
 After `import pylikwid` you can call the following functions:
