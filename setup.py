@@ -8,7 +8,7 @@ from distutils.core import setup, Extension
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-likwid = Extension('likwid',
+pylikwid = Extension('pylikwid',
                     include_dirs = ["/usr/local/include"],
                     libraries = ['likwid'],
                     library_dirs = ["/usr/local/lib"],
@@ -30,8 +30,8 @@ setup(
         "License :: OSI Approved :: GPL License",
     ],
     package_data = {
-        "likwid" : ["likwidmodule.c", "README.md", "LICENSE"],
+        "pylikwid" : ["likwidmodule.c", "README.md", "LICENSE"],
         "tests" : ["testlib.py", "testmarker.py", "testmarker.sh"]
     },
-    ext_modules = [likwid]
+    ext_modules = [pylikwid]
 )

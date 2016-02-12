@@ -166,14 +166,9 @@ likwid_hpmmode(PyObject *self, PyObject *args)
     int mode;
     if (!PyArg_ParseTuple(args, "i", &mode))
         return Py_False;
-    if (access_initialized == 1)
-    {
-        return Py_False;
-    }
     if ((mode == ACCESSMODE_DIRECT) || (mode == ACCESSMODE_DAEMON))
     {
         HPMmode(mode);
-        access_initialized = 1;
         return Py_True;
     }
     return Py_False;
@@ -196,7 +191,7 @@ likwid_hpmaddthread(PyObject *self, PyObject *args)
 {
     int cpuid, ret;
     if (!PyArg_ParseTuple(args, "i", &cpuid))
-        return NULL;
+        return Py_BuildValue("i", -1);
     if (access_initialized == 0)
     {
         return Py_BuildValue("i", -1);
@@ -1448,7 +1443,7 @@ static PyMethodDef LikwidMethods[] = {
 };
 
 PyMODINIT_FUNC
-initlikwid(void)
+initpylikwid(void)
 {
-    (void) Py_InitModule("likwid", LikwidMethods);
+    (void) Py_InitModule("pylikwid", LikwidMethods);
 }
