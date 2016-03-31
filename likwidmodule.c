@@ -1111,12 +1111,32 @@ likwid_getResult(PyObject *self, PyObject *args)
 }
 
 static PyObject *
+likwid_getLastResult(PyObject *self, PyObject *args)
+{
+    int g, e, t;
+    double result;
+    PyArg_ParseTuple(args, "iii", &g, &e, &t);
+    result = perfmon_getLastResult(g, e, t);
+    return Py_BuildValue("d", result);
+}
+
+static PyObject *
 likwid_getMetric(PyObject *self, PyObject *args)
 {
     int g, m, t;
     double result;
     PyArg_ParseTuple(args, "iii", &g, &m, &t);
     result = perfmon_getMetric(g, m, t);
+    return Py_BuildValue("d", result);
+}
+
+static PyObject *
+likwid_getLastMetric(PyObject *self, PyObject *args)
+{
+    int g, m, t;
+    double result;
+    PyArg_ParseTuple(args, "iii", &g, &m, &t);
+    result = perfmon_getLastMetric(g, m, t);
     return Py_BuildValue("d", result);
 }
 
@@ -1419,7 +1439,9 @@ static PyMethodDef LikwidMethods[] = {
     {"switch", likwid_switchGroup, METH_VARARGS, "Switch the currently set up group."},
     {"finalize", likwid_finalize, METH_VARARGS, "Finalize the whole Likwid system including Performance Monitoring module."},
     {"getresult", likwid_getResult, METH_VARARGS, "Get the current result of a measurement."},
+    {"getlastresult", likwid_getLastResult, METH_VARARGS, "Get the result of the last measurement cycle."},
     {"getmetric", likwid_getMetric, METH_VARARGS, "Get the current result of a derived metric."},
+    {"getlastmetric", likwid_getLastMetric, METH_VARARGS, "Get the current result of a derived metric with values from the last measurement cycle."},
     {"getnumberofgroups", likwid_getNumberOfGroups, METH_VARARGS, "Get the amount of currently configured groups."},
     {"getnumberofevents", likwid_getNumberOfEvents, METH_VARARGS, "Get the amount of events in a groups."},
     {"getnumberofmetrics", likwid_getNumberOfMetrics, METH_VARARGS, "Get the amount of events in a groups."},

@@ -241,9 +241,13 @@ Switch to group `gid` (stop->setup(gid)->start)
 - `pylikwid.getidofactivegroup()`
 Return the `gid` of the currently configured group
 - `pylikwid.getresult(gid, eidx, tidx)`:
-Return the raw counter register result identified by group `gid` and the indices for event `eidx` and thread `tidx`
+Return the raw counter register result of all measurements identified by group `gid` and the indices for event `eidx` and thread `tidx`
+- `pylikwid.getlastresult(gid, eidx, tidx)`:
+Return the raw counter register result of the last measurement cycle identified by group `gid` and the indices for event `eidx` and thread `tidx`
 - `pylikwid.getmetric(gid, midx, tidx)`:
-Return the derived metric result identified by group `gid` and the indices for metric `midx` and thread `tidx`
+Return the derived metric result of all measurements identified by group `gid` and the indices for metric `midx` and thread `tidx`
+- `pylikwid.getlastmetric(gid, midx, tidx)`:
+Return the derived metric result of the last measurement cycle identified by group `gid` and the indices for metric `midx` and thread `tidx`
 - `pylikwid.gettimeofgroup(gid)`:
 Return the measurement time for group identified by `gid`
 - `pylikwid.finalize()`:
