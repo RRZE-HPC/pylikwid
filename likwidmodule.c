@@ -156,6 +156,26 @@ likwid_pinthread(PyObject *self, PyObject *args)
 
 /*
 ################################################################################
+# Misc functions
+################################################################################
+*/
+
+static PyObject *
+likwid_setverbosity(PyObject *self, PyObject *args)
+{
+    int verbosity;
+    if (!PyArg_ParseTuple(args, "i", &verbosity))
+        return NULL;
+    if (verbosity >= DEBUGLEV_ONLY_ERROR && verbosity <= DEBUGLEV_DEVELOP)
+    {
+        perfmon_setVerbosity(verbosity);
+        return Py_BuildValue("i", verbosity);
+    }
+    return Py_BuildValue("i", -1);
+}
+
+/*
+################################################################################
 # Access client related functions
 ################################################################################
 */
@@ -1392,6 +1412,8 @@ static PyMethodDef LikwidMethods[] = {
     {"getprocessorid", likwid_getprocessorid, METH_VARARGS, "Returns the current CPU ID."},
     {"pinprocess", likwid_pinprocess, METH_VARARGS, "Pins the current process to the given CPU."},
     {"pinthread", likwid_pinthread, METH_VARARGS, "Pins the current thread to the given CPU."},
+    /* misc functions */
+    {"setverbosity", likwid_setverbosity, METH_VARARGS, "Set the verbosity for the LIKWID library."},
     /* configuration functions */
     {"initconfiguration", likwid_initconfiguration, METH_VARARGS, "Initialize the configuration module."},
     {"destroyconfiguration", likwid_destroyconfiguration, METH_VARARGS, "Finalize the configuration module."},
