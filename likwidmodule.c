@@ -1309,14 +1309,18 @@ likwid_getGroups(PyObject *self, PyObject *args)
         topo_initialized = 1;
     }
     ret = perfmon_getGroups(&tmp, &infos, &longs);
-    PyObject *l = PyList_New(ret);
-    for(i=0;i<ret;i++)
+    if (ret > 0)
     {
-        PyObject *d = PyDict_New();
-        PyDict_SetItem(d, PYSTR("Name"), PYSTR(tmp[i]));
-        PyDict_SetItem(d, PYSTR("Info"), PYSTR(infos[i]));
-        PyDict_SetItem(d, PYSTR("Long"), PYSTR(longs[i]));
-        PyList_SET_ITEM(l, (Py_ssize_t)i, d);
+        PyObject *l = PyList_New(ret);
+        for(i=0;i<ret;i++)
+        {
+            PyObject *d = PyDict_New();
+            PyDict_SetItem(d, PYSTR("Name"), PYSTR(tmp[i]));
+            PyDict_SetItem(d, PYSTR("Info"), PYSTR(infos[i]));
+            PyDict_SetItem(d, PYSTR("Long"), PYSTR(longs[i]));
+            PyList_SET_ITEM(l, (Py_ssize_t)i, d);
+        }
+        perfmon_returnGroups(ret, tmp, infos, longs);
     }
     return l;
 }
