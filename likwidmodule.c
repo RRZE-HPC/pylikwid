@@ -1308,10 +1308,11 @@ likwid_getGroups(PyObject *self, PyObject *args)
         topology_init();
         topo_initialized = 1;
     }
+    PyObject *l;
     ret = perfmon_getGroups(&tmp, &infos, &longs);
     if (ret > 0)
     {
-        PyObject *l = PyList_New(ret);
+        l = PyList_New(ret);
         for(i=0;i<ret;i++)
         {
             PyObject *d = PyDict_New();
@@ -1324,7 +1325,7 @@ likwid_getGroups(PyObject *self, PyObject *args)
     }
     else
     {
-        PyObject *l = PyList_New(0);
+        l = PyList_New(0);
     }
     return l;
 }
