@@ -586,7 +586,7 @@ static PyObject *
 likwid_initaffinity(PyObject *self, PyObject *args)
 {
     int i,j;
-    
+
     if (topo_initialized == 0)
     {
         topology_init();
@@ -823,7 +823,7 @@ likwid_getPowerInfo(PyObject *self, PyObject *args)
     PyDict_SetItem(n, PYSTR("minFrequency"), Py_BuildValue("d", power->minFrequency));
     PyDict_SetItem(n, PYSTR("powerUnit"), Py_BuildValue("d", power->powerUnit));
     PyDict_SetItem(n, PYSTR("timeUnit"), Py_BuildValue("d", power->timeUnit));
-    
+
     PyObject *l = PyList_New(power->turbo.numSteps);
     for (i=0; i<power->turbo.numSteps; i++)
     {
@@ -1321,6 +1321,10 @@ likwid_getGroups(PyObject *self, PyObject *args)
             PyList_SET_ITEM(l, (Py_ssize_t)i, d);
         }
         perfmon_returnGroups(ret, tmp, infos, longs);
+    }
+    else
+    {
+        PyObject *l = PyList_New(0);
     }
     return l;
 }
