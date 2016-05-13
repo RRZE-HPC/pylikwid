@@ -289,6 +289,21 @@ likwid_getconfiguration(PyObject *self, PyObject *args)
     return d;
 }
 
+static PyObject *
+likwid_setgrouppath(PyObject *self, PyObject *args)
+{
+    int ret = 0;
+    char* grouppath;
+    if (!PyArg_ParseTuple(args, "s", &grouppath))
+        return Py_False;
+    ret = config_setGroupPath(grouppath);
+    if (ret == 0)
+    {
+        return Py_True;
+    }
+    return Py_False;
+}
+
 /*
 ################################################################################
 # CPU topology related functions
@@ -1064,6 +1079,45 @@ likwid_readCounters(PyObject *self, PyObject *args)
 }
 
 static PyObject *
+likwid_readCountersCpu(PyObject *self, PyObject *args)
+{
+    int ret;
+    if (perfmon_initialized == 0)
+    {
+        PYINT(-1);
+    }
+    PyArg_ParseTuple(args, "i", &ret);
+    ret = perfmon_readCountersCpu(ret);
+    return PYINT(ret);
+}
+
+static PyObject *
+likwid_readGroupCounters(PyObject *self, PyObject *args)
+{
+    int ret;
+    if (perfmon_initialized == 0)
+    {
+        PYINT(-1);
+    }
+    PyArg_ParseTuple(args, "i", &ret);
+    ret = perfmon_readGroupCounters(ret);
+    return PYINT(ret);
+}
+
+static PyObject *
+likwid_readGroupThreadCounters(PyObject *self, PyObject *args)
+{
+    int ret, thread;
+    if (perfmon_initialized == 0)
+    {
+        PYINT(-1);
+    }
+    PyArg_ParseTuple(args, "ii", &ret, &thread);
+    ret = perfmon_readGroupThreadCounters(ret, thread);
+    return PYINT(ret);
+}
+
+static PyObject *
 likwid_switchGroup(PyObject *self, PyObject *args)
 {
     int ret = 0, newgroup;
@@ -1303,6 +1357,7 @@ likwid_getGroups(PyObject *self, PyObject *args)
 {
     int i, ret;
     char** tmp, **infos, **longs;
+    PyObject *l;
     if (topo_initialized == 0)
     {
         topology_init();
@@ -1311,7 +1366,7 @@ likwid_getGroups(PyObject *self, PyObject *args)
     ret = perfmon_getGroups(&tmp, &infos, &longs);
     if (ret > 0)
     {
-        PyObject *l = PyList_New(ret);
+        l = PyList_New(ret);
         for(i=0;i<ret;i++)
         {
             PyObject *d = PyDict_New();
@@ -1321,6 +1376,10 @@ likwid_getGroups(PyObject *self, PyObject *args)
             PyList_SET_ITEM(l, (Py_ssize_t)i, d);
         }
         perfmon_returnGroups(ret, tmp, infos, longs);
+    }
+    else
+    {
+        l = PyList_New(0);
     }
     return l;
 }
@@ -1373,6 +1432,46 @@ likwid_markerRegionThreads(PyObject *self, PyObject *args)
 }
 
 static PyObject *
+likwid_markerRegionCpulist(PyObject *self, PyObject *args)
+{
+    int r, ret = 0;
+    int* cpulist;
+    PyArg_ParseTuple(args, "i", &r);
+    if (!topo_initialized)
+    {
+        ret = topology_init();
+        if (ret == 0)
+        {
+            topo_initialized = 1;
+        }
+        else
+        {
+            return PyList_New(0);
+        }
+    }
+    if ((topo_initialized) && (cpuinfo == NULL))
+    {
+        cpuinfo = get_cpuInfo();
+    }
+    if ((topo_initialized) && (cputopo == NULL))
+    {
+        cputopo = get_cpuTopology();
+    }
+    cpulist = (int*)malloc(cputopo->numHWThreads * sizeof(int));
+    if (cpulist == NULL)
+    {
+        return PyList_New(0);
+    }
+    ret = perfmon_getCpulistOfRegion(r, cputopo->numHWThreads, cpulist);
+    PyObject *l = PyList_New(ret);
+    for(r=0; r<ret;r++)
+    {
+        PyList_SET_ITEM(l, (Py_ssize_t)r, PYINT(cpulist[r]));
+    }
+    return l;
+}
+
+static PyObject *
 likwid_markerRegionTime(PyObject *self, PyObject *args)
 {
     int r, t;
@@ -1421,6 +1520,7 @@ static PyMethodDef LikwidMethods[] = {
     /* configuration functions */
     {"initconfiguration", likwid_initconfiguration, METH_VARARGS, "Initialize the configuration module."},
     {"destroyconfiguration", likwid_destroyconfiguration, METH_VARARGS, "Finalize the configuration module."},
+    {"setgrouppath", likwid_setgrouppath, METH_VARARGS, "Set search path for performance group files"},
     {"getconfiguration", likwid_getconfiguration, METH_VARARGS, "Get the configration information."},
     /* access functions */
     {"hpmmode", likwid_hpmmode, METH_VARARGS, "Set the access mode for the HPM access module."},
@@ -1461,7 +1561,10 @@ static PyMethodDef LikwidMethods[] = {
     {"setup", likwid_setupCounters, METH_VARARGS, "Setup measuring an event set with LIKWID."},
     {"start", likwid_startCounters, METH_VARARGS, "Start measuring an event set with LIKWID."},
     {"stop", likwid_stopCounters, METH_VARARGS, "Stop measuring an event set with LIKWID."},
-    {"read", likwid_readCounters, METH_VARARGS, "Read the current values of an event set with LIKWID."},
+    {"read", likwid_readCounters, METH_VARARGS, "Read the current values of the configured event set with LIKWID."},
+    {"readcpu", likwid_readCountersCpu, METH_VARARGS, "Read the current values of the configured event set on a CPU"},
+    {"readgroup", likwid_readGroupCounters, METH_VARARGS, "Read the current values of the given group ID on all CPUs"},
+    {"readgroupthread", likwid_readGroupThreadCounters, METH_VARARGS, "Read the current values of the given group ID of the given thread"},
     {"switch", likwid_switchGroup, METH_VARARGS, "Switch the currently set up group."},
     {"finalize", likwid_finalize, METH_VARARGS, "Finalize the whole Likwid system including Performance Monitoring module."},
     {"getresult", likwid_getResult, METH_VARARGS, "Get the current result of a measurement."},
@@ -1487,6 +1590,7 @@ static PyMethodDef LikwidMethods[] = {
     {"markerregionevents", likwid_markerRegionEvents, METH_VARARGS, "Return the number of events of a region from a Marker API run."},
     {"markerregiontag", likwid_markerRegionTag, METH_VARARGS, "Return the tag of a region from a Marker API run."},
     {"markerregionthreads", likwid_markerRegionThreads, METH_VARARGS, "Return the number of threads of a region from a Marker API run."},
+    {"markerregioncpulist", likwid_markerRegionCpulist, METH_VARARGS, "Returns the list of CPUs that took part in the region."},
     {"markerregiontime", likwid_markerRegionTime, METH_VARARGS, "Return the runtime of a region for a thread from a Marker API run."},
     {"markerregioncount", likwid_markerRegionCount, METH_VARARGS, "Return the call count of a region for a thread from a Marker API run."},
     {"markerregionresult", likwid_markerRegionResult, METH_VARARGS, "Return the result of a region for a event/thread combination from a Marker API run."},
