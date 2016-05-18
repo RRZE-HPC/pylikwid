@@ -1363,7 +1363,6 @@ likwid_getGroups(PyObject *self, PyObject *args)
         topology_init();
         topo_initialized = 1;
     }
-    PyObject *l;
     ret = perfmon_getGroups(&tmp, &infos, &longs);
     if (ret > 0)
     {
