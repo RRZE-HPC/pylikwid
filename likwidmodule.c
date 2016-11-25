@@ -597,6 +597,13 @@ likwid_finalizenuma(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+
+/*
+################################################################################
+# Affinity related functions
+################################################################################
+*/
+
 static PyObject *
 likwid_initaffinity(PyObject *self, PyObject *args)
 {
@@ -714,6 +721,13 @@ likwid_cpustr_to_cpulist(PyObject *self, PyObject *args)
     return l;
 }
 
+
+/*
+################################################################################
+# Timer related functions
+################################################################################
+*/
+
 static PyObject *
 likwid_getCpuClock(PyObject *self, PyObject *args)
 {
@@ -779,6 +793,11 @@ likwid_getClock(PyObject *self, PyObject *args)
     return Py_BuildValue("d", timer_print(&timer));
 }
 
+/*
+################################################################################
+# Temperature related functions
+################################################################################
+*/
 
 static PyObject *
 likwid_initTemp(PyObject *self, PyObject *args)
@@ -798,6 +817,12 @@ likwid_readTemp(PyObject *self, PyObject *args)
     thermal_read(cpuid, &data);
     return PYUINT(data);
 }
+
+/*
+################################################################################
+# Power/Energy related functions
+################################################################################
+*/
 
 static PyObject *
 likwid_getPowerInfo(PyObject *self, PyObject *args)
@@ -944,6 +969,12 @@ likwid_getPower(PyObject *self, PyObject *args)
     PyArg_ParseTuple(args, "ddI", &pwrdata.before, &pwrdata.after, &type);
     return Py_BuildValue("d", power_printEnergy(&pwrdata));
 }
+
+/*
+################################################################################
+# Perfmon related functions
+################################################################################
+*/
 
 static PyObject *
 likwid_init(PyObject *self, PyObject *args)
@@ -1208,7 +1239,7 @@ static PyObject *
 likwid_getLastMetric(PyObject *self, PyObject *args)
 {
     int g, m, t;
-    double result;
+    double result = 0.0;
     PyArg_ParseTuple(args, "iii", &g, &m, &t);
     result = perfmon_getLastMetric(g, m, t);
     return Py_BuildValue("d", result);
@@ -1384,6 +1415,12 @@ likwid_getGroups(PyObject *self, PyObject *args)
     return l;
 }
 
+/*
+################################################################################
+# Perfmon MarkerAPI related functions
+################################################################################
+*/
+
 static PyObject *
 likwid_readMarkerFile(PyObject *self, PyObject *args)
 {
@@ -1503,6 +1540,104 @@ likwid_markerRegionMetric(PyObject *self, PyObject *args)
     return Py_BuildValue("d", perfmon_getMetricOfRegionThread(r, m, t));
 }
 
+/*
+################################################################################
+# CPU frequency related functions
+################################################################################
+*/
+
+static PyObject *
+likwid_freqGetCpuClockCurrent(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    PyArg_ParseTuple(args, "i", &c);
+    return PYINT(freq_getCpuClockCurrent(c));
+}
+
+static PyObject *
+likwid_freqGetCpuClockMax(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    PyArg_ParseTuple(args, "i", &c);
+    return PYINT(freq_getCpuClockMax(c));
+}
+
+static PyObject *
+likwid_freqGetCpuClockMin(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    PyArg_ParseTuple(args, "i", &c);
+    return PYINT(freq_getCpuClockMin(c));
+}
+
+static PyObject *
+likwid_freqSetCpuClockCurrent(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    int f = 0;
+    PyArg_ParseTuple(args, "ii", &c, &f);
+    return Py_BuildValue("i", freq_setCpuClockCurrent(c, f));
+}
+
+static PyObject *
+likwid_freqSetCpuClockMax(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    int f = 0;
+    PyArg_ParseTuple(args, "ii", &c, &f);
+    return Py_BuildValue("i", freq_setCpuClockMax(c, f));
+}
+
+static PyObject *
+likwid_freqSetCpuClockMin(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    int f = 0;
+    PyArg_ParseTuple(args, "ii", &c, &f);
+    return Py_BuildValue("i", freq_setCpuClockMin(c, f));
+}
+
+static PyObject *
+likwid_freqGetGovernor(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    PyArg_ParseTuple(args, "i", &c);
+    return PYSTR(freq_getGovernor(c));
+}
+
+static PyObject *
+likwid_freqSetGovernor(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    const char* g;
+    PyArg_ParseTuple(args, "is", &c, &g);
+    return PYINT(freq_setGovernor(c, (char*)g));
+}
+
+static PyObject *
+likwid_freqGetAvailFreq(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    PyArg_ParseTuple(args, "i", &c);
+    return PYSTR(freq_getAvailFreq(c));
+}
+
+static PyObject *
+likwid_freqGetAvailGovs(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    PyArg_ParseTuple(args, "i", &c);
+    return PYSTR(freq_getAvailGovs(c));
+}
+
+static PyObject *
+likwid_freqGetDriver(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    PyArg_ParseTuple(args, "i", &c);
+    return PYSTR(freq_getDriver(c));
+}
+
 static PyMethodDef LikwidMethods[] = {
     {"markerinit", likwid_markerinit, METH_VARARGS, "Initialize the LIKWID Marker API."},
     {"markerthreadinit", likwid_markerthreadinit, METH_VARARGS, "Initialize threads for the LIKWID Marker API."},
@@ -1584,6 +1719,7 @@ static PyMethodDef LikwidMethods[] = {
     {"getnameofgroup", likwid_getNameOfGroup, METH_VARARGS, "Return the name of a group."},
     {"getshortinfoofgroup", likwid_getShortInfoOfGroup, METH_VARARGS, "Return the short description of a group."},
     {"getlonginfoofgroup", likwid_getLongInfoOfGroup, METH_VARARGS, "Return the long description of a group."},
+    /* perfmon markerAPI functions */
     {"markerreadfile", likwid_readMarkerFile, METH_VARARGS, "Read in the results from a Marker API run."},
     {"markernumregions", likwid_markerNumRegions, METH_VARARGS, "Return the number of regions from a Marker API run."},
     {"markerregiongroup", likwid_markerRegionGroup, METH_VARARGS, "Return the group of a region from a Marker API run."},
@@ -1595,6 +1731,18 @@ static PyMethodDef LikwidMethods[] = {
     {"markerregioncount", likwid_markerRegionCount, METH_VARARGS, "Return the call count of a region for a thread from a Marker API run."},
     {"markerregionresult", likwid_markerRegionResult, METH_VARARGS, "Return the result of a region for a event/thread combination from a Marker API run."},
     {"markerregionmetric", likwid_markerRegionMetric, METH_VARARGS, "Return the metric value of a region for a metric/thread combination from a Marker API run."},
+    /* CPU frequency functions */
+    {"getcpuclockcurrent", likwid_freqGetCpuClockCurrent, METH_VARARGS, "Returns the current CPU frequency of the given CPU."},
+    {"getcpuclockmax", likwid_freqGetCpuClockMax, METH_VARARGS, "Returns the maximal CPU frequency of the given CPU."},
+    {"getcpuclockmin", likwid_freqGetCpuClockMin, METH_VARARGS, "Returns the minimal CPU frequency of the given CPU."},
+    {"setcpuclockcurrent", likwid_freqSetCpuClockCurrent, METH_VARARGS, "Sets the current CPU frequency of the given CPU."},
+    {"setcpuclockmax", likwid_freqSetCpuClockMax, METH_VARARGS, "Sets the maximal CPU frequency of the given CPU."},
+    {"setcpuclockmin", likwid_freqSetCpuClockMin, METH_VARARGS, "Sets the minimal CPU frequency of the given CPU."},
+    {"getgovernor", likwid_freqGetGovernor, METH_VARARGS, "Returns the CPU frequency govneror of the given CPU."},
+    {"setgovernor", likwid_freqSetGovernor, METH_VARARGS, "Sets the CPU frequency govneror of the given CPU."},
+    {"getdriver", likwid_freqGetDriver, METH_VARARGS, "Returns the CPU frequency driver."},
+    {"getavailfreqs", likwid_freqGetAvailFreq, METH_VARARGS, "Returns the available CPU frequency steps."},
+    {"getavailgovs", likwid_freqGetAvailGovs, METH_VARARGS, "Returns the available CPU frequency governors."},
     {NULL, NULL, 0, NULL}
 };
 
