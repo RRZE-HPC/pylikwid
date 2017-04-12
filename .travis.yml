@@ -15,7 +15,7 @@ before_script:
     - sudo modprobe msr
 script:
     - python -c "import pylikwid"
-    - ./testlib.py
+    - ./testtopo.py
 
 ## for future reference:
 #deploy:
