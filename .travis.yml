@@ -1,0 +1,28 @@
+language: c
+compiler: gcc
+install: true
+dist: trusty
+sudo: required
+before_install:
+    - git clone https://github.com/RRZE-HPC/likwid.git
+    - cd likwid
+    - make && sudo make install
+    - cd ..
+install:
+    - python setup.py build_ext -I /usr/local/include/ -L /usr/local/lib/ -R /usr/local/lib/
+    - python setup.py install
+before_script:
+    - sudo modprobe msr
+script:
+    - python -c "import pylikwid"
+    - ./testlib.py
+
+## for future reference:
+#deploy:
+#  provider: pypi
+#  user: travis.rrze-hpc
+#  password:
+#    secure: ...
+#  distributions: "sdist bdist_wheel"
+#  on:
+#    repo: RRZE-HPC/likwid-python-api
