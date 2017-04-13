@@ -16,6 +16,9 @@ before_script:
 script:
     - python -c "import pylikwid"
     - ./testtopo.py
+    - ./testpin.py
+    - ./testaffinity.py
+# testmarker.py and testlib.py cannot be used on TravisCI
 
 ## for future reference:
 #deploy:
