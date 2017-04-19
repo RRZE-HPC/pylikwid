@@ -26,6 +26,6 @@ deploy:
   user: travis.rrze-hpc
   password:
     secure: "NcaLnnOEEQ/hjoSX1x+a2teU+3VafD/GOSug43+wsJSdbpxoK3qwzGdpLHOU1mX3npCfdAmvXdRMNhqCSHKRWgiN8Ir5Rp7kVWBgtmkPm7PfoL36/RjeABUJHZzrpIhH5GU5SrKk+xwGMrLf4aMcLsVVV61jqjC3gh7NpCw8GfkTBwKbA8Ul0YaSPPoWsr6g8DiAnEqlCJvNSVOXeNglZ4EEoUXGruqWvkEINOEMAbf4rODL4SgL2tgxcz9VL1CSj+BprkwYv+diGeq/9VbrtsOsNSBr3+12KccnCXVUFu1zRrCzFwOnHr6QXnJCfkSRpd5Bmj12xIHLZifMEHIHRknSfRXbgO2IeaWNyUYQras/iRmkphC01EgOMyvukB8Udilk9hQnj3h41wnd991fO7Z+cKzL2mr1ZGOajHvneBPn9Pa/RnrX9DL22HcwuGrKtWqlTq9MkBpMIWvpjaEI+BDZS1YIXNyKsaKdYYsK7cGYO4uNUDoJF/asAB+vFuAKjqD6MTToPn0X9v0wvdYVnCv88oHSgfgj6ZBy/Utppx1AoP380huygvdUHei2nc6357PvHfGWbSeoUGvxduloMoeXqggR1XF1mgbye1ZU1bXC/9mjkrBQ/XUcK0ZUnIM9rCn7tOfuzkkMjGCpn00F6H0t2COzNmsc/qshGKLd8+k="
-  distributions: "sdist bdist_wheel"
+  distributions: "sdist"
   on:
     repo: RRZE-HPC/pylikwid
