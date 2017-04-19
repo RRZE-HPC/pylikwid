@@ -15,7 +15,7 @@ pylikwid = Extension("pylikwid",
                     sources = ["pylikwid.c"])
 
 setup(
-    name = "likwid_python_api",
+    name = "pylikwid",
     version = "0.1",
     author = "Thomas Roehl",
     author_email = "thomas.roehl@gmail.com",
