@@ -15,15 +15,15 @@ pylikwid = Extension("pylikwid",
                     sources = ["pylikwid.c"])
 
 setup(
-    name = "likwid_python_api",
+    name = "pylikwid",
     version = "0.1",
     author = "Thomas Roehl",
     author_email = "thomas.roehl@gmail.com",
     description = ("A Python module to access the function of the LIKWID library"),
-    long_description=read("README.md"),
+    long_description=read("README.rst"),
     license = "GPLv2",
     keywords = "hpc performance benchmark analysis",
-    url = "https://github.com/TomTheBear/likwid-python-api",
+    url = "https://github.com/RRZE-HPC/pylikwid",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
@@ -35,7 +35,7 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     package_data = {
-        "pylikwid" : ["pylikwid.c", "README.md", "LICENSE"],
+        "pylikwid" : ["pylikwid.c", "README.rst", "LICENSE"],
         "tests" : ["testlib.py", "testmarker.py", "testmarker.sh"]
     },
     ext_modules = [pylikwid]
