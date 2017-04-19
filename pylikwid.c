@@ -1028,7 +1028,14 @@ likwid_init(PyObject *self, PyObject *args)
     }
     for (i=0; i<nrThreads; i++)
     {
-        cpulist[i] = (int)PyInt_AsSsize_t(PyList_GetItem(pyList, i));
+        int size = 0;
+#if (PY_MAJOR_VERSION == 2)
+        size = (int)PyInt_AsSsize_t(PyList_GetItem(pyList, i));
+#endif
+#if (PY_MAJOR_VERSION == 3)
+        PyArg_ParseTuple(PyList_GetItem(pyList, i), "d", &size);
+#endif
+        cpulist[i] = size;
     }
     if (perfmon_initialized == 0)
     {
@@ -1746,8 +1753,24 @@ static PyMethodDef LikwidMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+#if (PY_MAJOR_VERSION == 2)
 PyMODINIT_FUNC
 initpylikwid(void)
 {
     (void) Py_InitModule("pylikwid", LikwidMethods);
 }
+#endif
+#if (PY_MAJOR_VERSION == 3)
+static struct PyModuleDef pylikwidmodule = {
+    PyModuleDef_HEAD_INIT,
+    "pylikwid",   /* name of module */
+    NULL, /* module documentation, may be NULL */
+    -1,       /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    LikwidMethods
+};
+PyMODINIT_FUNC
+PyInit_pylikwid(void)
+{
+        return PyModule_Create(&pylikwidmodule);
+}
+#endif
