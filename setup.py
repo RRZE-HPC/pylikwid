@@ -31,7 +31,6 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Software Development",
         "Topic :: Utilities",
-        "License :: OSI Approved :: GPL License",
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
         "Programming Language :: Python :: 3",
     ],
