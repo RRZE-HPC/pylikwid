@@ -6,7 +6,7 @@ def do_work():
     l = []
     for i in range(1000000):
         l += [i]
-    print("Running on CPU %d" % pylikwid.getprocessorid())
+    print("Running on CPU {}".format(pylikwid.getprocessorid()))
 
 
 pylikwid.inittopology()
