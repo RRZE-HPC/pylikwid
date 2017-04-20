@@ -36,7 +36,7 @@ setup(
     ],
     package_data = {
         "pylikwid" : ["pylikwid.c", "README.rst", "LICENSE"],
-        "tests" : ["testlib.py", "testmarker.py", "testmarker.sh"]
+        "tests" : ["tests/*.py"]
     },
     ext_modules = [pylikwid]
 )
