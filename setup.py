@@ -33,10 +33,15 @@ setup(
         "Topic :: Utilities",
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.7",
     ],
     package_data = {
         "pylikwid" : ["pylikwid.c", "README.rst", "LICENSE"],
-        "tests" : ["testlib.py", "testmarker.py", "testmarker.sh"]
+        "tests" : ["tests/*.py"]
     },
     ext_modules = [pylikwid]
 )

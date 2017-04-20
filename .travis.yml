@@ -1,4 +1,4 @@
-language: c
+language: python
 python:
 - '2.7'
 - '3.4'
@@ -20,9 +20,9 @@ before_script:
     - sudo modprobe msr
 script:
     - python -c "import pylikwid"
-    - ./testtopo.py
-    - ./testpin.py
-    - ./testaffinity.py
+    - ./tests/testtopo.py
+    - ./tests//testpin.py
+    - ./tests//testaffinity.py
 # testmarker.py and testlib.py cannot be used on TravisCI
 
 ## for future reference:
