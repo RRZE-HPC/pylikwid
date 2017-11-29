@@ -1,4 +1,4 @@
-import os
+import os, os.path, glob, re
 from distutils.core import setup, Extension
 
 # Utility function to read the README.md file.
@@ -8,9 +8,35 @@ from distutils.core import setup, Extension
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+ver_regex = re.compile("so.(\d+)[.]*(\d*)")
+
+def get_highest_version(paths, lib):
+    max_lib = ""
+    max_path = ""
+    for p in paths:
+        if os.path.exists(p):
+            libs = glob.glob(os.path.join(p, lib)+"*")
+            for l in libs:
+                if ver_regex.search(l):
+                    if len(l) > len(max_lib):
+                        max_lib = l
+                        max_path = p
+                        continue
+                    if len(max_lib) > 0 and len(l) == len(max_lib):
+                        m = ver_regex.search(l)
+                        max_m = ver_regex.search(max_lib)
+                        for i in range(len(max_m.groups())):
+                            if int(m.group(i+1)) > int(max_m.group(i+1)):
+                                max_lib = l
+                                max_path = p
+                                break
+    return ":"+max_lib.replace(max_path, "").strip("/")
+
 pylikwid = Extension("pylikwid",
                     include_dirs = ["/usr/local/include"],
-                    libraries = ["likwid"],
+                    libraries = [get_highest_version(["/usr/local/lib"], "liblikwid.so")],
+                    #libraies = ["likwid"] links with liblikwid.so
+                    #libraies = [":liblikwid.so.4.3"] links with liblikwid.so.4.3
                     library_dirs = ["/usr/local/lib"],
                     sources = ["pylikwid.c"])
 

@@ -1577,14 +1577,6 @@ likwid_freqGetCpuClockMin(PyObject *self, PyObject *args)
     return PYINT(freq_getCpuClockMin(c));
 }
 
-static PyObject *
-likwid_freqSetCpuClockCurrent(PyObject *self, PyObject *args)
-{
-    int c = 0;
-    int f = 0;
-    PyArg_ParseTuple(args, "ii", &c, &f);
-    return Py_BuildValue("i", freq_setCpuClockCurrent(c, f));
-}
 
 static PyObject *
 likwid_freqSetCpuClockMax(PyObject *self, PyObject *args)
@@ -1637,13 +1629,6 @@ likwid_freqGetAvailGovs(PyObject *self, PyObject *args)
     return PYSTR(freq_getAvailGovs(c));
 }
 
-static PyObject *
-likwid_freqGetDriver(PyObject *self, PyObject *args)
-{
-    int c = 0;
-    PyArg_ParseTuple(args, "i", &c);
-    return PYSTR(freq_getDriver(c));
-}
 
 static PyMethodDef LikwidMethods[] = {
     {"markerinit", likwid_markerinit, METH_VARARGS, "Initialize the LIKWID Marker API."},
@@ -1742,12 +1727,10 @@ static PyMethodDef LikwidMethods[] = {
     {"getcpuclockcurrent", likwid_freqGetCpuClockCurrent, METH_VARARGS, "Returns the current CPU frequency of the given CPU."},
     {"getcpuclockmax", likwid_freqGetCpuClockMax, METH_VARARGS, "Returns the maximal CPU frequency of the given CPU."},
     {"getcpuclockmin", likwid_freqGetCpuClockMin, METH_VARARGS, "Returns the minimal CPU frequency of the given CPU."},
-    {"setcpuclockcurrent", likwid_freqSetCpuClockCurrent, METH_VARARGS, "Sets the current CPU frequency of the given CPU."},
     {"setcpuclockmax", likwid_freqSetCpuClockMax, METH_VARARGS, "Sets the maximal CPU frequency of the given CPU."},
     {"setcpuclockmin", likwid_freqSetCpuClockMin, METH_VARARGS, "Sets the minimal CPU frequency of the given CPU."},
     {"getgovernor", likwid_freqGetGovernor, METH_VARARGS, "Returns the CPU frequency govneror of the given CPU."},
     {"setgovernor", likwid_freqSetGovernor, METH_VARARGS, "Sets the CPU frequency govneror of the given CPU."},
-    {"getdriver", likwid_freqGetDriver, METH_VARARGS, "Returns the CPU frequency driver."},
     {"getavailfreqs", likwid_freqGetAvailFreq, METH_VARARGS, "Returns the available CPU frequency steps."},
     {"getavailgovs", likwid_freqGetAvailGovs, METH_VARARGS, "Returns the available CPU frequency governors."},
     {NULL, NULL, 0, NULL}
