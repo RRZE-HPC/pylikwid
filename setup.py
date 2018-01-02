@@ -1,7 +1,7 @@
-import os, os.path, glob, re
+import os, os.path, glob, re, subprocess
 from distutils.core import setup, Extension
 
-LIKWID_PREFIX = "/usr/local"
+DEF_LIKWID_PREFIX = "/usr/local"
 
 
 # Utility function to read the README.md file.
@@ -12,6 +12,19 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 ver_regex = re.compile("so.(\d+)[.]*(\d*)")
+
+def get_prefix():
+    path = None
+    for p in os.environ["PATH"].split(":"):
+        cmd = "find %s/.. -type f -name \"liblikwid.so*\" 2>&1 | grep \"lib/\"" % (p,)
+        ps = subprocess.Popen(cmd, shell=True, close_fds=True, stdout=subprocess.PIPE)
+        sout, serr = ps.communicate()
+        if sout:
+            if len(sout) > 0:
+                path = "/".join(os.path.normpath(sout.strip()).split("/")[:-2])
+                break
+    return path
+
 
 def get_highest_version(paths, lib):
     max_lib = ""
@@ -35,6 +48,8 @@ def get_highest_version(paths, lib):
                                 break
     return ":"+max_lib.replace(max_path, "").strip("/")
 
+LIKWID_PREFIX = get_prefix() or DEF_LIKWID_PREFIX
+
 pylikwid = Extension("pylikwid",
                     include_dirs = [os.path.join(LIKWID_PREFIX, "include")],
                     libraries = [get_highest_version([os.path.join(LIKWID_PREFIX, "lib")], "liblikwid.so")],
@@ -45,7 +60,7 @@ pylikwid = Extension("pylikwid",
 
 setup(
     name = "pylikwid",
-    version = "0.2.3",
+    version = "0.2.4",
     author = "Thomas Roehl",
     author_email = "thomas.roehl@gmail.com",
     description = ("A Python module to access the function of the LIKWID library"),
