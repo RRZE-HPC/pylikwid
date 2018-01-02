@@ -15,7 +15,7 @@ ver_regex = re.compile("so.(\d+)[.]*(\d*)")
 
 def get_prefix():
     path = None
-    printf("Searching for LIKWID installation")
+    print("Searching for LIKWID installation")
     for p in os.environ["PATH"].split(":"):
         cmd = "find %s/.. -type f -name \"liblikwid.so*\" 2>&1 | grep \"lib/\"" % (p,)
         ps = subprocess.Popen(cmd, shell=True, close_fds=True, stdout=subprocess.PIPE)
