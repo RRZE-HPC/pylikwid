@@ -15,6 +15,7 @@ ver_regex = re.compile("so.(\d+)[.]*(\d*)")
 
 def get_prefix():
     path = None
+    printf("Searching for LIKWID installation")
     for p in os.environ["PATH"].split(":"):
         cmd = "find %s/.. -type f -name \"liblikwid.so*\" 2>&1 | grep \"lib/\"" % (p,)
         ps = subprocess.Popen(cmd, shell=True, close_fds=True, stdout=subprocess.PIPE)
@@ -48,7 +49,9 @@ def get_highest_version(paths, lib):
                                 break
     return ":"+max_lib.replace(max_path, "").strip("/")
 
-LIKWID_PREFIX = get_prefix() or DEF_LIKWID_PREFIX
+LIKWID_PREFIX = get_prefix()
+if not LIKWID_PREFIX:
+    LIKWID_PREFIX = DEF_LIKWID_PREFIX
 
 pylikwid = Extension("pylikwid",
                     include_dirs = [os.path.join(LIKWID_PREFIX, "include")],
