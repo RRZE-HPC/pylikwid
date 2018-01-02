@@ -11,7 +11,7 @@ DEF_LIKWID_PREFIX = "/usr/local"
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-ver_regex = re.compile("so.(\d+)[.]*(\d*)")
+ver_regex = re.compile(b"so.(\d+)[.]*(\d*)")
 
 def get_prefix():
     path = None
@@ -22,17 +22,19 @@ def get_prefix():
         sout, serr = ps.communicate()
         if sout:
             if len(sout) > 0:
-                path = "/".join(os.path.normpath(sout.strip()).split("/")[:-2])
+                path = b"/".join(os.path.normpath(sout.strip()).split(b"/")[:-2])
                 break
-    return path
+    print("Using LIKWID installation at {!s}".format(str(path)))
+    return bytes(path)
 
 
 def get_highest_version(paths, lib):
     max_lib = ""
     max_path = ""
     for p in paths:
+        print(p)
         if os.path.exists(p):
-            libs = glob.glob(os.path.join(p, lib)+"*")
+            libs = glob.glob(os.path.join(p, lib)+b"*")
             for l in libs:
                 if ver_regex.search(l):
                     if len(l) > len(max_lib):
@@ -47,18 +49,18 @@ def get_highest_version(paths, lib):
                                 max_lib = l
                                 max_path = p
                                 break
-    return ":"+max_lib.replace(max_path, "").strip("/")
+    return (b":"+max_lib.replace(max_path, b"").strip(b"/")).decode()
 
 LIKWID_PREFIX = get_prefix()
 if not LIKWID_PREFIX:
-    LIKWID_PREFIX = DEF_LIKWID_PREFIX
+    LIKWID_PREFIX = str(DEF_LIKWID_PREFIX)  
 
 pylikwid = Extension("pylikwid",
-                    include_dirs = [os.path.join(LIKWID_PREFIX, "include")],
-                    libraries = [get_highest_version([os.path.join(LIKWID_PREFIX, "lib")], "liblikwid.so")],
+                    include_dirs = [os.path.join(LIKWID_PREFIX, b"include").decode()],
+                    libraries = [get_highest_version([os.path.join(LIKWID_PREFIX, b"lib")], b"liblikwid.so")],
                     #libraies = ["likwid"] links with liblikwid.so
                     #libraies = [":liblikwid.so.4.3"] links with liblikwid.so.4.3
-                    library_dirs = [os.path.join(LIKWID_PREFIX, "lib")],
+                    library_dirs = [os.path.join(LIKWID_PREFIX, b"lib").decode()],
                     sources = ["pylikwid.c"])
 
 setup(
