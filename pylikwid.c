@@ -1512,6 +1512,7 @@ likwid_markerRegionCpulist(PyObject *self, PyObject *args)
     {
         PyList_SET_ITEM(l, (Py_ssize_t)r, PYINT(cpulist[r]));
     }
+    free(cpulist);
     return l;
 }
 
