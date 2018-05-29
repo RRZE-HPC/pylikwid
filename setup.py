@@ -24,8 +24,8 @@ def get_prefix():
             if len(sout) > 0:
                 path = b"/".join(os.path.normpath(sout.strip()).split(b"/")[:-2])
                 break
-    print("Using LIKWID libray at {!s}".format(str(path)))
-    return bytes(path.strip("\n"))
+    print("Using LIKWID libray at {!s}".format(path.decode()))
+    return bytes(path).decode().strip("\n").encode()
 
 
 def get_highest_version(paths, lib):
