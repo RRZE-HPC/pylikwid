@@ -17,22 +17,21 @@ def get_prefix():
     path = None
     print("Searching for LIKWID installation")
     for p in os.environ["PATH"].split(":"):
-        cmd = "find %s/.. -type f -name \"liblikwid.so*\" 2>&1 | grep \"lib/\"" % (p,)
+        cmd = "find %s/.. -type f -name \"liblikwid.so*\" 2>&1 | grep \"lib/\" | head -n1" % (p,)
         ps = subprocess.Popen(cmd, shell=True, close_fds=True, stdout=subprocess.PIPE)
         sout, serr = ps.communicate()
         if sout:
             if len(sout) > 0:
                 path = b"/".join(os.path.normpath(sout.strip()).split(b"/")[:-2])
                 break
-    print("Using LIKWID installation at {!s}".format(str(path)))
-    return bytes(path)
+    print("Using LIKWID libray at {!s}".format(str(path)))
+    return bytes(path.strip("\n"))
 
 
 def get_highest_version(paths, lib):
     max_lib = ""
     max_path = ""
     for p in paths:
-        print(p)
         if os.path.exists(p):
             libs = glob.glob(os.path.join(p, lib)+b"*")
             for l in libs:
@@ -53,7 +52,7 @@ def get_highest_version(paths, lib):
 
 LIKWID_PREFIX = get_prefix()
 if not LIKWID_PREFIX:
-    LIKWID_PREFIX = str(DEF_LIKWID_PREFIX)  
+    LIKWID_PREFIX = str(DEF_LIKWID_PREFIX)
 
 pylikwid = Extension("pylikwid",
                     include_dirs = [os.path.join(LIKWID_PREFIX, b"include").decode()],
@@ -65,7 +64,7 @@ pylikwid = Extension("pylikwid",
 
 setup(
     name = "pylikwid",
-    version = "0.2.4",
+    version = "0.2.5",
     author = "Thomas Roehl",
     author_email = "thomas.roehl@gmail.com",
     description = ("A Python module to access the function of the LIKWID library"),
