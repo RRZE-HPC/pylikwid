@@ -37,7 +37,7 @@ def get_lib_path(prefix):
     try:
         ps = subprocess.Popen(cmd, shell=True, close_fds=True, stdout=subprocess.PIPE)
         sout, serr = ps.communicate()
-        
+
         if sout:
             inp = sout.decode().strip("\n").encode()
             path = os.path.dirname(inp)
@@ -75,7 +75,7 @@ pylikwid = Extension("pylikwid",
 
 setup(
     name = "pylikwid",
-    version = "0.2.7",
+    version = "0.2.8",
     author = "Thomas Roehl",
     author_email = "thomas.roehl@googlemail.com",
     description = ("A Python module to access the function of the LIKWID library"),

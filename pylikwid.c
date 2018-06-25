@@ -1559,7 +1559,7 @@ likwid_freqGetCpuClockCurrent(PyObject *self, PyObject *args)
 {
     int c = 0;
     PyArg_ParseTuple(args, "i", &c);
-    return PYINT(freq_getCpuClockCurrent(c));
+    return PYUINT(freq_getCpuClockCurrent(c));
 }
 
 static PyObject *
@@ -1567,7 +1567,7 @@ likwid_freqGetCpuClockMax(PyObject *self, PyObject *args)
 {
     int c = 0;
     PyArg_ParseTuple(args, "i", &c);
-    return PYINT(freq_getCpuClockMax(c));
+    return PYUINT(freq_getCpuClockMax(c));
 }
 
 static PyObject *
@@ -1575,7 +1575,7 @@ likwid_freqGetCpuClockMin(PyObject *self, PyObject *args)
 {
     int c = 0;
     PyArg_ParseTuple(args, "i", &c);
-    return PYINT(freq_getCpuClockMin(c));
+    return PYUINT(freq_getCpuClockMin(c));
 }
 
 
@@ -1585,7 +1585,7 @@ likwid_freqSetCpuClockMax(PyObject *self, PyObject *args)
     int c = 0;
     int f = 0;
     PyArg_ParseTuple(args, "ii", &c, &f);
-    return Py_BuildValue("i", freq_setCpuClockMax(c, f));
+    return PYUINT(freq_setCpuClockMax(c, f));
 }
 
 static PyObject *
@@ -1594,7 +1594,7 @@ likwid_freqSetCpuClockMin(PyObject *self, PyObject *args)
     int c = 0;
     int f = 0;
     PyArg_ParseTuple(args, "ii", &c, &f);
-    return Py_BuildValue("i", freq_setCpuClockMin(c, f));
+    return PYUINT(freq_setCpuClockMin(c, f));
 }
 
 static PyObject *
@@ -1630,6 +1630,47 @@ likwid_freqGetAvailGovs(PyObject *self, PyObject *args)
     return PYSTR(freq_getAvailGovs(c));
 }
 
+static PyObject *
+likwid_freqSetUncoreClockMin(PyObject *self, PyObject *args)
+{
+    int s = 0;
+    int f = 0;
+    PyArg_ParseTuple(args, "ii", &s, &f);
+    return Py_BuildValue("i", freq_setUncoreFreqMin(s, f));
+}
+
+static PyObject *
+likwid_freqGetUncoreClockMin(PyObject *self, PyObject *args)
+{
+    int s = 0;
+    PyArg_ParseTuple(args, "i", &s);
+    return PYUINT(freq_getUncoreFreqMin(s)*1000000);
+}
+
+static PyObject *
+likwid_freqSetUncoreClockMax(PyObject *self, PyObject *args)
+{
+    int s = 0;
+    int f = 0;
+    PyArg_ParseTuple(args, "ii", &s, &f);
+    return Py_BuildValue("i", freq_setUncoreFreqMax(s, f));
+}
+
+static PyObject *
+likwid_freqGetUncoreClockMax(PyObject *self, PyObject *args)
+{
+    int s = 0;
+    PyArg_ParseTuple(args, "i", &s);
+    return PYUINT(freq_getUncoreFreqMax(s)*1000000);
+}
+
+static PyObject *
+likwid_freqGetUncoreClockCurrent(PyObject *self, PyObject *args)
+{
+    int s = 0;
+    PyArg_ParseTuple(args, "i", &s);
+    return PYUINT(freq_getUncoreFreqCur(s)*1000000);
+}
 
 static PyMethodDef LikwidMethods[] = {
     {"markerinit", likwid_markerinit, METH_VARARGS, "Initialize the LIKWID Marker API."},
@@ -1725,15 +1766,20 @@ static PyMethodDef LikwidMethods[] = {
     {"markerregionresult", likwid_markerRegionResult, METH_VARARGS, "Return the result of a region for a event/thread combination from a Marker API run."},
     {"markerregionmetric", likwid_markerRegionMetric, METH_VARARGS, "Return the metric value of a region for a metric/thread combination from a Marker API run."},
     /* CPU frequency functions */
-    {"getcpuclockcurrent", likwid_freqGetCpuClockCurrent, METH_VARARGS, "Returns the current CPU frequency of the given CPU."},
-    {"getcpuclockmax", likwid_freqGetCpuClockMax, METH_VARARGS, "Returns the maximal CPU frequency of the given CPU."},
-    {"getcpuclockmin", likwid_freqGetCpuClockMin, METH_VARARGS, "Returns the minimal CPU frequency of the given CPU."},
-    {"setcpuclockmax", likwid_freqSetCpuClockMax, METH_VARARGS, "Sets the maximal CPU frequency of the given CPU."},
-    {"setcpuclockmin", likwid_freqSetCpuClockMin, METH_VARARGS, "Sets the minimal CPU frequency of the given CPU."},
+    {"getcpuclockcurrent", likwid_freqGetCpuClockCurrent, METH_VARARGS, "Returns the current CPU frequency (in Hz) of the given CPU."},
+    {"getcpuclockmax", likwid_freqGetCpuClockMax, METH_VARARGS, "Returns the maximal CPU frequency (in Hz) of the given CPU."},
+    {"getcpuclockmin", likwid_freqGetCpuClockMin, METH_VARARGS, "Returns the minimal CPU frequency (in Hz) of the given CPU."},
+    {"setcpuclockmax", likwid_freqSetCpuClockMax, METH_VARARGS, "Sets the maximal CPU frequency (in Hz) of the given CPU."},
+    {"setcpuclockmin", likwid_freqSetCpuClockMin, METH_VARARGS, "Sets the minimal CPU frequency (in Hz) of the given CPU."},
     {"getgovernor", likwid_freqGetGovernor, METH_VARARGS, "Returns the CPU frequency govneror of the given CPU."},
     {"setgovernor", likwid_freqSetGovernor, METH_VARARGS, "Sets the CPU frequency govneror of the given CPU."},
-    {"getavailfreqs", likwid_freqGetAvailFreq, METH_VARARGS, "Returns the available CPU frequency steps."},
-    {"getavailgovs", likwid_freqGetAvailGovs, METH_VARARGS, "Returns the available CPU frequency governors."},
+    {"getavailfreqs", likwid_freqGetAvailFreq, METH_VARARGS, "Returns the available CPU frequency steps (in GHz, returns string)."},
+    {"getavailgovs", likwid_freqGetAvailGovs, METH_VARARGS, "Returns the available CPU frequency governors (returns string)."},
+    {"getuncoreclockcurrent", likwid_freqGetUncoreClockCurrent, METH_VARARGS, "Returns the current Uncore frequency of the given CPU socket."},
+    {"getuncoreclockmax", likwid_freqGetUncoreClockMax, METH_VARARGS, "Returns the maximal Uncore frequency (in Hz) of the given CPU socket."},
+    {"getuncoreclockmin", likwid_freqGetUncoreClockMin, METH_VARARGS, "Returns the minimal Uncore frequency (in Hz) of the given CPU socket."},
+    {"setuncoreclockmax", likwid_freqSetUncoreClockMax, METH_VARARGS, "Sets the maximal Uncore frequency (in Hz) of the given CPU socket."},
+    {"setuncoreclockmin", likwid_freqSetUncoreClockMin, METH_VARARGS, "Sets the minimal Uncore frequency (in Hz) of the given CPU socket."},
     {NULL, NULL, 0, NULL}
 };
 
