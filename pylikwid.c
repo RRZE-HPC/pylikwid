@@ -1664,6 +1664,7 @@ likwid_freqGetUncoreClockMax(PyObject *self, PyObject *args)
     return PYUINT(freq_getUncoreFreqMax(s)*1000000);
 }
 
+#if 0
 static PyObject *
 likwid_freqGetUncoreClockCurrent(PyObject *self, PyObject *args)
 {
@@ -1671,6 +1672,7 @@ likwid_freqGetUncoreClockCurrent(PyObject *self, PyObject *args)
     PyArg_ParseTuple(args, "i", &s);
     return PYUINT(freq_getUncoreFreqCur(s)*1000000);
 }
+#endif
 
 static PyMethodDef LikwidMethods[] = {
     {"markerinit", likwid_markerinit, METH_VARARGS, "Initialize the LIKWID Marker API."},
@@ -1775,7 +1777,9 @@ static PyMethodDef LikwidMethods[] = {
     {"setgovernor", likwid_freqSetGovernor, METH_VARARGS, "Sets the CPU frequency govneror of the given CPU."},
     {"getavailfreqs", likwid_freqGetAvailFreq, METH_VARARGS, "Returns the available CPU frequency steps (in GHz, returns string)."},
     {"getavailgovs", likwid_freqGetAvailGovs, METH_VARARGS, "Returns the available CPU frequency governors (returns string)."},
+#if 0
     {"getuncoreclockcurrent", likwid_freqGetUncoreClockCurrent, METH_VARARGS, "Returns the current Uncore frequency of the given CPU socket."},
+#endif
     {"getuncoreclockmax", likwid_freqGetUncoreClockMax, METH_VARARGS, "Returns the maximal Uncore frequency (in Hz) of the given CPU socket."},
     {"getuncoreclockmin", likwid_freqGetUncoreClockMin, METH_VARARGS, "Returns the minimal Uncore frequency (in Hz) of the given CPU socket."},
     {"setuncoreclockmax", likwid_freqSetUncoreClockMax, METH_VARARGS, "Sets the maximal Uncore frequency (in Hz) of the given CPU socket."},

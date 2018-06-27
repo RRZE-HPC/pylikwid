@@ -24,9 +24,8 @@ minunc = int(pylikwid.getuncoreclockmin(0)/1E6)
 maxunc = int(pylikwid.getuncoreclockmax(0)/1E6)
 print("\nUncore frequencies:")
 for socket in range(topodict["numSockets"]):
-    print("Socket {} : {} MHz (min: {}, max: {})".format(socket, pylikwid.getuncoreclockcurrent(socket),
-                                                                 pylikwid.getuncoreclockmin(socket),
-                                                                 pylikwid.getuncoreclockmax(socket)))
+    print("Socket {} : min: {} MHz, max: {} MHz".format(socket, pylikwid.getuncoreclockmin(socket),
+                                                                pylikwid.getuncoreclockmax(socket)))
 
 print("\nSet frequency of CPU 1 to minimum {} MHz:".format(int(float(minfreq)/1E6)))
 pylikwid.setcpuclockmin(1, int(float(minfreq)/1E3))
@@ -67,16 +66,14 @@ print("CPU {} : {} Hz (min: {}, max: {}, gov: {})".format(1, pylikwid.getcpucloc
 print("\nSet Uncore frequency of socket 0 to minimum {}:".format(minunc))
 pylikwid.setuncoreclockmin(0, minunc)
 pylikwid.setuncoreclockmax(0, minunc)
-print("Socket {} : {} MHz (min: {}, max: {})".format(0, pylikwid.getuncoreclockcurrent(0),
-                                                        pylikwid.getuncoreclockmin(0),
-                                                        pylikwid.getuncoreclockmax(0)))
+print("Socket {} : min: {} MHz, max: {} MHz".format(0, pylikwid.getuncoreclockmin(0),
+                                                       pylikwid.getuncoreclockmax(0)))
 
 print("\nReset Uncore frequency of socket 0:")
 pylikwid.setuncoreclockmin(0, minunc)
 pylikwid.setuncoreclockmax(0, maxunc)
-print("Socket {} : {} MHz (min: {}, max: {})".format(0, pylikwid.getuncoreclockcurrent(0),
-                                                        pylikwid.getuncoreclockmin(0),
-                                                        pylikwid.getuncoreclockmax(0)))
+print("Socket {} : min: {} MHz, max: {} MHz".format(0, pylikwid.getuncoreclockmin(0),
+                                                       pylikwid.getuncoreclockmax(0)))
 
 
 pylikwid.finalizetopology()

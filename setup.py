@@ -75,7 +75,7 @@ pylikwid = Extension("pylikwid",
 
 setup(
     name = "pylikwid",
-    version = "0.2.8",
+    version = "0.2.9",
     author = "Thomas Roehl",
     author_email = "thomas.roehl@googlemail.com",
     description = ("A Python module to access the function of the LIKWID library"),
