@@ -5,34 +5,30 @@ python:
 - '3.5'
 - '3.6'
 compiler: gcc
-install: true
+install:
+- python setup.py build_ext -I /usr/local/include/ -L /usr/local/lib/ -R /usr/local/lib/
+- python setup.py install
 dist: trusty
 sudo: required
 before_install:
-    - git clone https://github.com/RRZE-HPC/likwid.git
-    - cd likwid
-    - make && sudo make install
-    - cd ..
-install:
-    - python setup.py build_ext -I /usr/local/include/ -L /usr/local/lib/ -R /usr/local/lib/
-    - python setup.py install
+- git clone https://github.com/RRZE-HPC/likwid.git
+- cd likwid
+- make && sudo make install
+- cd ..
 before_script:
-    - sudo modprobe msr
+- sudo modprobe msr
 script:
-    - python -c "import pylikwid"
-    - ./tests/testtopo.py
-    - ./tests//testpin.py
-    - ./tests//testaffinity.py
-# testmarker.py and testlib.py cannot be used on TravisCI
-
-## for future reference:
+- python -c "import pylikwid"
+- "./tests/testtopo.py"
+- "./tests//testpin.py"
+- "./tests//testaffinity.py"
 deploy:
   provider: pypi
   skip_existing: true
   user: travis.rrze-hpc
   password:
-    secure: "NcaLnnOEEQ/hjoSX1x+a2teU+3VafD/GOSug43+wsJSdbpxoK3qwzGdpLHOU1mX3npCfdAmvXdRMNhqCSHKRWgiN8Ir5Rp7kVWBgtmkPm7PfoL36/RjeABUJHZzrpIhH5GU5SrKk+xwGMrLf4aMcLsVVV61jqjC3gh7NpCw8GfkTBwKbA8Ul0YaSPPoWsr6g8DiAnEqlCJvNSVOXeNglZ4EEoUXGruqWvkEINOEMAbf4rODL4SgL2tgxcz9VL1CSj+BprkwYv+diGeq/9VbrtsOsNSBr3+12KccnCXVUFu1zRrCzFwOnHr6QXnJCfkSRpd5Bmj12xIHLZifMEHIHRknSfRXbgO2IeaWNyUYQras/iRmkphC01EgOMyvukB8Udilk9hQnj3h41wnd991fO7Z+cKzL2mr1ZGOajHvneBPn9Pa/RnrX9DL22HcwuGrKtWqlTq9MkBpMIWvpjaEI+BDZS1YIXNyKsaKdYYsK7cGYO4uNUDoJF/asAB+vFuAKjqD6MTToPn0X9v0wvdYVnCv88oHSgfgj6ZBy/Utppx1AoP380huygvdUHei2nc6357PvHfGWbSeoUGvxduloMoeXqggR1XF1mgbye1ZU1bXC/9mjkrBQ/XUcK0ZUnIM9rCn7tOfuzkkMjGCpn00F6H0t2COzNmsc/qshGKLd8+k="
-  distributions: "sdist"
+    secure: iqXaZAwnR5dnVK9KXgCFiqII3/EpBruluuunXraYnELt11+pxfeea4FbvNi6V8X2EYS+EQWleObuQ4kY9zR5MTG9cYKYJSzO1adkcq6zKIXDFIOz2bKnENhJ35ofCmQa0MyhizzdDB7wk/2oK9Y1ZyLHPk+uWQiAKFgWF05tyaKiN4Fy/PEIJhp/Sz59QTBNtSAo3/vXp8VjLSJ1JHwqBE5xu9K212AP5NEbF9QdsWUufyaEbP/hF5+tDGJXT4XebNCIRG6aMlKW9gJoX6ELZpXueCfJKD5Q2D55B/YT4ceNl5SQGavLEFJWLGLDSuMYMx9cSloSzT/ORjtHOW7PLU/lO45yLdu8ts64SJXO+mlBrZzywqt5aQlgOHGXvvWslmN148HoZyFsbnPOmtOwEvoNMCbuwhYiHcni4Lj7SbrwltF49IJQMjpWwGJaQc1AUA1crdCJgScpZCm/IuQq0XZ26SNlFHYfMAUaUB4sSdZIaaELEzPv+d1S2NEmLcAc41I0vIbt75zStaMTGcZpq8Siq+/p9m7bJvXQ1NverghzOKOUJErdNfnMHHzT72y8G1dUCHEzSGbmHzLUWaoW/0wqd6y7210W+0mSaFOvaNWhsa8aavDFv7ImN6mMKCBoESTTPLCxPbtl43eA0syt8dw+yKssfuR4T32T/d/07bw=
+  distributions: sdist
   skip_cleanup: true
   on:
     repo: RRZE-HPC/pylikwid
