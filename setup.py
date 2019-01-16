@@ -50,7 +50,7 @@ def get_hierarchy():
         library = find_file(iterator)
         if library is not None:
             library_path = os.path.dirname(library)
-    else:
+    if library is None:
         paths_iterator = iter(os.environ["PATH"].split(":"))
         is_searching = True
         while is_searching:
