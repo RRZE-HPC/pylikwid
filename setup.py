@@ -1,4 +1,4 @@
-import os, os.path, glob, re
+import os, os.path, glob, re, sys
 from distutils.core import setup, Extension
 
 
@@ -11,6 +11,15 @@ def read(fname):
 
 
 ver_regex = re.compile(b"so.(\d+)[.]*(\d*)")
+
+
+def generic_iglob(pattern):
+    result = None
+    if sys.version_info.major == 3:
+        result = glob.iglob(pattern, recursive=True)
+    else:
+        result = glob.iglob(pattern)
+    return result
 
 
 def find_file(path_iterator):
@@ -35,9 +44,9 @@ def get_hierarchy():
     library_path = None
     library = None
     prefix = os.getenv('LIKWID_PREFIX', None)
-    library_pattern = 'lib*/liblikwid.so*'
+    library_pattern = '/lib*/liblikwid.so*'
     if prefix is not None:
-        iterator = glob.iglob(prefix + library_pattern, recursive=True)
+        iterator = generic_iglob(prefix + library_pattern)
         library = find_file(iterator)
         if library is not None:
             library_path = os.path.dirname(library)
@@ -48,26 +57,23 @@ def get_hierarchy():
             try:
                 path = next(paths_iterator)
                 prefix = os.path.abspath(path + '../')
-                iterator = glob.iglob(prefix + library_pattern,
-                                      recursive=True)
+                iterator = generic_iglob(prefix + library_pattern)
                 library = find_file(iterator)
                 if library is not None:
                     library_path = os.path.dirname(library)
                     is_searching = False
             except StopIteration:
                 is_searching = False
-            if library_path is None:
-                prefix = '/usr/local'
-                iterator = glob.iglob(prefix + library_pattern,
-                                      recursive=True)
-                library = find_file(iterator)
-                if library is not None:
-                    library_path = os.path.dirname(library)
-                    is_searching = False
+        if library is None:
+            prefix = '/usr/local'
+            iterator = generic_iglob(prefix + library_pattern)
+            library = find_file(iterator)
+            if library is not None:
+                library_path = os.path.dirname(library)
 
     include_path = os.path.join(prefix, 'include')
     if not os.path.exists(os.path.join(include_path, 'likwid.h')):
-        iterator = glob.iglob(prefix + '**/likwid.h', recursive=True)
+        iterator = generic_iglob(prefix + '**/likwid.h')
         include_path = find_file(iterator)
     if prefix is None or not os.path.exists(prefix):
         raise Exception('Error the likwid prefix directory was not found')
