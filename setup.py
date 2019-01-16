@@ -43,10 +43,10 @@ def get_hierarchy():
     include_path = None
     library_path = None
     library = None
-    prefix = os.getenv('LIKWID_PREFIX', None)
+    prefix_path = os.getenv('LIKWID_PREFIX', None)
     library_pattern = '/lib*/liblikwid.so*'
-    if prefix is not None:
-        iterator = generic_iglob(prefix + library_pattern)
+    if prefix_path is not None:
+        iterator = generic_iglob(prefix_path + library_pattern)
         library = find_file(iterator)
         if library is not None:
             library_path = os.path.dirname(library)
@@ -56,8 +56,8 @@ def get_hierarchy():
         while is_searching:
             try:
                 path = next(paths_iterator)
-                prefix = os.path.abspath(path + '../')
-                iterator = generic_iglob(prefix + library_pattern)
+                prefix_path = os.path.abspath(path + '../')
+                iterator = generic_iglob(prefix_path + library_pattern)
                 library = find_file(iterator)
                 if library is not None:
                     library_path = os.path.dirname(library)
@@ -65,17 +65,17 @@ def get_hierarchy():
             except StopIteration:
                 is_searching = False
         if library is None:
-            prefix = '/usr/local'
-            iterator = generic_iglob(prefix + library_pattern)
+            prefix_path = '/usr/local'
+            iterator = generic_iglob(prefix_path + library_pattern)
             library = find_file(iterator)
             if library is not None:
                 library_path = os.path.dirname(library)
 
-    include_path = os.path.join(prefix, 'include')
+    include_path = os.path.join(prefix_path, 'include')
     if not os.path.exists(os.path.join(include_path, 'likwid.h')):
-        iterator = generic_iglob(prefix + '**/likwid.h')
+        iterator = generic_iglob(prefix_path + '**/likwid.h')
         include_path = find_file(iterator)
-    if prefix is None or not os.path.exists(prefix):
+    if prefix_path is None or not os.path.exists(prefix_path):
         raise Exception('Error the likwid prefix directory was not found')
     if library is None or not os.path.exists(library):
         raise Exception('Error the likwid library was not found')
@@ -83,8 +83,11 @@ def get_hierarchy():
         raise Exception('Error the likwid library directory was not found')
     if include_path is None or not os.path.exists(include_path):
         raise Exception('Error the likwid include directory was not found')
-    print("Using LIKWID library at {!s}".format(library_path))
-    return prefix, library_path, library, include_path
+    print("Using LIKWID prefix directory at {!s}".format(prefix_path))
+    print("Using LIKWID include directory at {!s}".format(include_path))
+    print("Using LIKWID library directory at {!s}".format(library_path))
+    print("Using LIKWID library named {!s}".format(library))
+    return prefix_path, library_path, library, include_path
 
 
 LIKWID_PREFIX, LIKWID_LIBPATH, LIKWID_LIB, LIKWID_INCPATH = get_hierarchy()
