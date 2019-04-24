@@ -946,8 +946,9 @@ likwid_startPower(PyObject *self, PyObject *args)
     int cpuId;
     PowerType type;
     PyArg_ParseTuple(args, "iI", &cpuId, &type);
+    pwrdata.domain = type;
     power_start(&pwrdata, cpuId, type);
-    return Py_BuildValue("d", pwrdata.before);
+    return Py_BuildValue("I", pwrdata.before);
 }
 
 static PyObject *
@@ -957,8 +958,9 @@ likwid_stopPower(PyObject *self, PyObject *args)
     int cpuId;
     PowerType type;
     PyArg_ParseTuple(args, "iI", &cpuId, &type);
+    pwrdata.domain = type;
     power_stop(&pwrdata, cpuId, type);
-    return Py_BuildValue("d", pwrdata.after);
+    return Py_BuildValue("I", pwrdata.after);
 }
 
 static PyObject *
@@ -966,8 +968,9 @@ likwid_getPower(PyObject *self, PyObject *args)
 {
     PowerData pwrdata;
     PowerType type;
-    PyArg_ParseTuple(args, "ddI", &pwrdata.before, &pwrdata.after, &type);
-    return Py_BuildValue("d", power_printEnergy(&pwrdata));
+    PyArg_ParseTuple(args, "III", &pwrdata.before, &pwrdata.after, &pwrdata.domain);
+    double energy = power_printEnergy(&pwrdata);
+    return Py_BuildValue("d", energy);
 }
 
 /*
