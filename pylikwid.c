@@ -1036,7 +1036,7 @@ likwid_init(PyObject *self, PyObject *args)
         size = (int)PyInt_AsSsize_t(PyList_GetItem(pyList, i));
 #endif
 #if (PY_MAJOR_VERSION == 3)
-        PyArg_ParseTuple(PyList_GetItem(pyList, i), "d", &size);
+        size = (int)PyLong_AsSsize_t(PyList_GetItem(pyList, i));
 #endif
         cpulist[i] = size;
     }
