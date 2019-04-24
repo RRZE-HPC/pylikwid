@@ -967,7 +967,6 @@ static PyObject *
 likwid_getPower(PyObject *self, PyObject *args)
 {
     PowerData pwrdata;
-    PowerType type;
     PyArg_ParseTuple(args, "III", &pwrdata.before, &pwrdata.after, &pwrdata.domain);
     double energy = power_printEnergy(&pwrdata);
     return Py_BuildValue("d", energy);
