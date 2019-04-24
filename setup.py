@@ -87,10 +87,18 @@ def get_hierarchy():
     print("Using LIKWID include directory at {!s}".format(include_path))
     print("Using LIKWID library directory at {!s}".format(library_path))
     print("Using LIKWID library named {!s}".format(library))
+    m = re.match("lib(.*)\.so", os.path.basename(library))
+    if m:
+        library = m.group(1)
     return prefix_path, library_path, library, include_path
 
+try:
+    LIKWID_PREFIX, LIKWID_LIBPATH, LIKWID_LIB, LIKWID_INCPATH = get_hierarchy()
+    print(LIKWID_PREFIX, LIKWID_LIBPATH, LIKWID_LIB, LIKWID_INCPATH)
+except Exception as e:
+    print(e)
+    sys.exit(1)
 
-LIKWID_PREFIX, LIKWID_LIBPATH, LIKWID_LIB, LIKWID_INCPATH = get_hierarchy()
 
 pylikwid = Extension("pylikwid",
                      include_dirs=[LIKWID_INCPATH],
@@ -100,7 +108,7 @@ pylikwid = Extension("pylikwid",
 
 setup(
     name="pylikwid",
-    version="0.2.9",
+    version="0.3.0",
     author="Thomas Roehl",
     author_email="thomas.roehl@googlemail.com",
     description="A Python module to access the function of the LIKWID library",
