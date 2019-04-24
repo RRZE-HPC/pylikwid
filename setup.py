@@ -15,7 +15,7 @@ ver_regex = re.compile(b"so.(\d+)[.]*(\d*)")
 
 def generic_iglob(pattern):
     result = None
-    if sys.version_info.major == 3:
+    if sys.version_info.major == 3 and sys.version_info.minor > 4:
         result = glob.iglob(pattern, recursive=True)
     else:
         result = glob.iglob(pattern)
@@ -108,7 +108,7 @@ pylikwid = Extension("pylikwid",
 
 setup(
     name="pylikwid",
-    version="0.3.0",
+    version="0.3.1",
     author="Thomas Roehl",
     author_email="thomas.roehl@googlemail.com",
     description="A Python module to access the function of the LIKWID library",
