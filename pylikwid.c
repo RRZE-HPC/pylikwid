@@ -695,7 +695,9 @@ likwid_cpustr_to_cpulist(PyObject *self, PyObject *args)
     int ret = 0, j = 0;
     const char *cpustr;
     if (!PyArg_ParseTuple(args, "s", &cpustr))
+    {
         Py_RETURN_NONE;
+    }
     if (configfile == NULL)
     {
         init_configuration();
@@ -707,7 +709,7 @@ likwid_cpustr_to_cpulist(PyObject *self, PyObject *args)
         Py_RETURN_NONE;
     }
     ret = cpustr_to_cpulist((char *)cpustr, cpulist, configfile->maxNumThreads);
-    if (ret <= 0)
+    if (ret < 0)
     {
         free(cpulist);
         Py_RETURN_NONE;
