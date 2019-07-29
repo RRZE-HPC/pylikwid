@@ -33,24 +33,24 @@ After ``import pylikwid`` you can call the following functions:
 Marker API
 ----------
 
--  ``pylikwid.init()``: Initialize the Marker API of the LIKWID library.
+-  ``pylikwid.markerinit()``: Initialize the Marker API of the LIKWID library.
    Must be called previous to all other functions.
--  ``pylikwid.threadinit()``: Add the current thread to the Marker API.
+-  ``pylikwid.markerthreadinit()``: Add the current thread to the Marker API.
    Since Python is commonly single-threaded simply call it directly
-   after ``pylikwid.init()``
+   after ``pylikwid.markerinit()``
 -  ``rr = pylikwid.registerregion(regiontag)``: Register a region to the
    Marker API. This is an optional function to reduce the overhead of
-   region registration at ``pylikwid.startregion``. If you don't call
+   region registration at ``pylikwid.markerstartregion``. If you don't call
    ``pylikwid.registerregion(regiontag)``, the registration is done at
-   ``pylikwid.startregion(regiontag)``. On success, 0 is return. If you
-   havn't called ``pylikwid.init()``, a negative number is returned.
--  ``err = pylikwid.startregion(regiontag)``: Start measurements under
+   ``pylikwid.markerstartregion(regiontag)``. On success, 0 is return. If you
+   havn't called ``pylikwid.markerinit()``, a negative number is returned.
+-  ``err = pylikwid.markerstartregion(regiontag)``: Start measurements under
    the name ``regiontag``. On success, 0 is return. If you havn't called
-   ``pylikwid.init()``, a negative number is returned.
--  ``err = pylikwid.stopregion(regiontag)``: Stop measurements under the
+   ``pylikwid.markerinit()``, a negative number is returned.
+-  ``err = pylikwid.markerstopregion(regiontag)``: Stop measurements under the
    name ``regiontag`` again. On success, 0 is return. If you havn't
-   called ``pylikwid.init()``, a negative number is returned.
--  ``num_events, events[], time, count = pylikwid.getregion(regiontag)``:
+   called ``pylikwid.markerinit()``, a negative number is returned.
+-  ``num_events, events[], time, count = pylikwid.markergetregion(regiontag)``:
    Get the intermediate results of the region identified by
    ``regiontag``. On success, it returns the number of events in the
    current group, a list with all the aggregated event results, the
@@ -58,7 +58,7 @@ Marker API
 -  ``pylikwid.nextgroup()``: Switch to the next event set in a
    round-robin fashion. If you have set only one event set on the
    command line, this function performs no operation.
--  ``pylikwid.close()``: Close the connection to the LIKWID Marker API
+-  ``pylikwid.markerclose()``: Close the connection to the LIKWID Marker API
    and write out measurement data to file. This file will be evaluated
    by ``likwid-perfctr``.
 -  ``pylikwid.getprocessorid()``: Returns the ID of the currently
@@ -404,17 +404,17 @@ in Python:
 
     import pylikwid
 
-    pylikwid.init()
-    pylikwid.threadinit()
+    pylikwid.markerinit()
+    pylikwid.markerthreadinit()
     liste = []
-    pylikwid.startregion("listappend")
+    pylikwid.markerstartregion("listappend")
     for i in range(0,1000000):
         liste.append(i)
-    pylikwid.stopregion("listappend")
-    nr_events, eventlist, time, count = pylikwid.getregion("listappend")
+    pylikwid.markerstopregion("listappend")
+    nr_events, eventlist, time, count = pylikwid.markergetregion("listappend")
     for i, e in enumerate(eventlist):
         print(i, e)
-    pylikwid.close()
+    pylikwid.markerclose()
 
 This code simply measures the hardware performance counters for
 appending 1000000 elements to a list. First the API is initialized with
