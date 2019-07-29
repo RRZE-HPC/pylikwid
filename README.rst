@@ -58,6 +58,8 @@ Marker API
 -  ``pylikwid.nextgroup()``: Switch to the next event set in a
    round-robin fashion. If you have set only one event set on the
    command line, this function performs no operation.
+-  ``pylikwid.markerreset(regiontag)``: Reset the values stored using the region
+   name ``regiontag``. On success, 0 is returned.
 -  ``pylikwid.markerclose()``: Close the connection to the LIKWID Marker API
    and write out measurement data to file. This file will be evaluated
    by ``likwid-perfctr``.

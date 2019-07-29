@@ -121,6 +121,19 @@ likwid_markernextgroup(PyObject *self, PyObject *args)
 }
 
 static PyObject *
+likwid_markerresetregion(PyObject *self, PyObject *args)
+{
+    const char *regiontag;
+    int ret;
+    if (!PyArg_ParseTuple(args, "s", &regiontag))
+        return NULL;
+
+    ret = likwid_markerResetRegion(regiontag);
+    return Py_BuildValue("i", ret);
+}
+
+
+static PyObject *
 likwid_markerclose(PyObject *self, PyObject *args)
 {
     likwid_markerClose();
@@ -1687,6 +1700,7 @@ static PyMethodDef LikwidMethods[] = {
     {"markergetregion", likwid_markergetregion, METH_VARARGS, "Get the current results for a code region."},
     {"markernextgroup", likwid_markernextgroup, METH_VARARGS, "Switch to next event set."},
     {"markerclose", likwid_markerclose, METH_VARARGS, "Close the Marker API and write results to file."},
+    {"markerreset", likwid_markerresetregion, METH_VARARGS, "Reset the values of the code region to 0"},
     {"getprocessorid", likwid_getprocessorid, METH_VARARGS, "Returns the current CPU ID."},
     {"pinprocess", likwid_pinprocess, METH_VARARGS, "Pins the current process to the given CPU."},
     {"pinthread", likwid_pinthread, METH_VARARGS, "Pins the current thread to the given CPU."},
