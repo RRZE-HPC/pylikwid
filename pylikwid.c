@@ -21,6 +21,23 @@ static int power_initialized = 0;
 PowerInfo_t power;
 static int timer_initialized = 0;
 static int perfmon_initialized = 0;
+
+static PyObject *
+likwid_lversion(PyObject *self, PyObject *args)
+{
+    int v = 0, r = 0, m = 0;
+#ifdef LIKWID_MAJOR
+    v = LIKWID_MAJOR;
+    r = LIKWID_RELEASE;
+    m = LIKWID_MINOR;
+#else
+    v = 4;
+    r = 3;
+    m = 4;
+#endif
+    return Py_BuildValue("iii", v, r, m);
+}
+
 /*
 ################################################################################
 # Marker API related functions
@@ -504,6 +521,9 @@ likwid_getcpuinfo(PyObject *self, PyObject *args)
     PyDict_SetItem(d, PYSTR("perf_num_ctr"), PYUINT(info->perf_num_ctr));
     PyDict_SetItem(d, PYSTR("perf_width_ctr"), PYUINT(info->perf_width_ctr));
     PyDict_SetItem(d, PYSTR("perf_num_fixed_ctr"), PYUINT(info->perf_num_fixed_ctr));
+#if (LIKWID_MAJOR == 5)
+    PyDict_SetItem(d, PYSTR("architecture"), PYSTR(info->architecture));
+#endif
     return d;
 }
 
@@ -736,6 +756,42 @@ likwid_cpustr_to_cpulist(PyObject *self, PyObject *args)
     return l;
 }
 
+
+#if (LIKWID_MAJOR == 5 && LIKWID_NVMON)
+static PyObject *
+likwid_gpustr_to_gpulist(PyObject *self, PyObject *args)
+{
+    int ret = 0, j = 0;
+    const char *gpustr;
+    if (!PyArg_ParseTuple(args, "s", &gpustr))
+    {
+        Py_RETURN_NONE;
+    }
+    if (configfile == NULL)
+    {
+        init_configuration();
+        configfile = get_configuration();
+    }
+    int* gpulist = (int*) malloc(configfile->maxNumThreads * sizeof(int));
+    if (!gpulist)
+    {
+        Py_RETURN_NONE;
+    }
+    ret = gpustr_to_gpulist((char *)gpustr, gpulist, configfile->maxNumThreads);
+    if (ret < 0)
+    {
+        free(gpulist);
+        Py_RETURN_NONE;
+    }
+    PyObject *l = PyList_New(ret);
+    for(j=0;j<ret;j++)
+    {
+        PyList_SET_ITEM(l, (Py_ssize_t)j, PYINT(gpulist[j]));
+    }
+    free(gpulist);
+    return l;
+}
+#endif
 
 /*
 ################################################################################
@@ -1570,6 +1626,13 @@ likwid_markerRegionMetric(PyObject *self, PyObject *args)
 # CPU frequency related functions
 ################################################################################
 */
+#if (LIKWID_MAJOR == 5)
+static PyObject *
+likwid_freqInit(PyObject *self, PyObject *args)
+{
+    return PYUINT(freq_init());
+}
+#endif
 
 static PyObject *
 likwid_freqGetCpuClockCurrent(PyObject *self, PyObject *args)
@@ -1587,6 +1650,16 @@ likwid_freqGetCpuClockMax(PyObject *self, PyObject *args)
     return PYUINT(freq_getCpuClockMax(c));
 }
 
+#if (LIKWID_MAJOR == 5)
+static PyObject *
+likwid_freqGetConfCpuClockMax(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    PyArg_ParseTuple(args, "i", &c);
+    return PYUINT(freq_getConfCpuClockMax(c));
+}
+#endif
+
 static PyObject *
 likwid_freqGetCpuClockMin(PyObject *self, PyObject *args)
 {
@@ -1595,6 +1668,15 @@ likwid_freqGetCpuClockMin(PyObject *self, PyObject *args)
     return PYUINT(freq_getCpuClockMin(c));
 }
 
+#if (LIKWID_MAJOR == 5)
+static PyObject *
+likwid_freqGetConfCpuClockMin(PyObject *self, PyObject *args)
+{
+    int c = 0;
+    PyArg_ParseTuple(args, "i", &c);
+    return PYUINT(freq_getConfCpuClockMin(c));
+}
+#endif
 
 static PyObject *
 likwid_freqSetCpuClockMax(PyObject *self, PyObject *args)
@@ -1681,6 +1763,15 @@ likwid_freqGetUncoreClockMax(PyObject *self, PyObject *args)
     return PYUINT(freq_getUncoreFreqMax(s)*1000000);
 }
 
+#if (LIKWID_MAJOR == 5)
+static PyObject *
+likwid_freqFinalize(PyObject *self, PyObject *args)
+{
+    freq_finalize();
+    Py_RETURN_NONE;
+}
+#endif
+
 #if 0
 static PyObject *
 likwid_freqGetUncoreClockCurrent(PyObject *self, PyObject *args)
@@ -1691,7 +1782,665 @@ likwid_freqGetUncoreClockCurrent(PyObject *self, PyObject *args)
 }
 #endif
 
+
+#if (LIKWID_MAJOR == 5 && LIKWID_NVMON)
+static int gpuTopology_initialized = 0;
+static GpuTopology_t gputopo = NULL;
+static int nvmon_initialized = 1;
+
+static PyObject *
+likwid_initgputopology(PyObject *self, PyObject *args)
+{
+    int ret = 0;
+    if (!gpuTopology_initialized)
+    {
+        ret = topology_gpu_init();
+        if (ret == EXIT_SUCCESS)
+        {
+            gpuTopology_initialized = 1;
+        }
+    }
+    return Py_BuildValue("i", ret);
+}
+
+static PyObject *
+likwid_finalizegputopology(PyObject *self, PyObject *args)
+{
+    if (gpuTopology_initialized)
+    {
+        topology_gpu_finalize();
+    }
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+likwid_getgputopology(PyObject *self, PyObject *args)
+{
+    int i, ret;
+
+    if (!gpuTopology_initialized)
+    {
+        ret = topology_gpu_init();
+        if (ret == EXIT_SUCCESS)
+        {
+            gpuTopology_initialized = 1;
+        }
+        else
+        {
+            Py_RETURN_NONE;
+        }
+    }
+    gputopo = get_gpuTopology();
+    if (gputopo)
+    {
+        PyObject *l = PyList_New(gputopo->numDevices);
+        for(i = 0; i < gputopo->numDevices; i++)
+        {
+            GpuDevice* dev = &gputopo->devices[i];
+            PyObject *d = PyDict_New();
+
+            PyDict_SetItem(d, PYSTR("devid"), PYUINT(dev->devid));
+            PyDict_SetItem(d, PYSTR("numaNode"), PYUINT(dev->numaNode));
+            PyDict_SetItem(d, PYSTR("name"), PYSTR(dev->name));
+            PyDict_SetItem(d, PYSTR("mem"), PYUINT(dev->mem));
+            PyDict_SetItem(d, PYSTR("ccapMajor"), PYUINT(dev->ccapMajor));
+            PyDict_SetItem(d, PYSTR("ccapMinor"), PYUINT(dev->ccapMinor));
+            PyDict_SetItem(d, PYSTR("maxThreadsPerBlock"), PYUINT(dev->maxThreadsPerBlock));
+            PyDict_SetItem(d, PYSTR("sharedMemPerBlock"), PYUINT(dev->sharedMemPerBlock));
+            PyDict_SetItem(d, PYSTR("totalConstantMemory"), PYUINT(dev->totalConstantMemory));
+            PyDict_SetItem(d, PYSTR("simdWidth"), PYUINT(dev->simdWidth));
+            PyDict_SetItem(d, PYSTR("memPitch"), PYUINT(dev->memPitch));
+            PyDict_SetItem(d, PYSTR("regsPerBlock"), PYUINT(dev->regsPerBlock));
+            PyDict_SetItem(d, PYSTR("clockRatekHz"), PYUINT(dev->clockRatekHz));
+            PyDict_SetItem(d, PYSTR("textureAlign"), PYUINT(dev->textureAlign));
+            PyDict_SetItem(d, PYSTR("l2Size"), PYUINT(dev->l2Size));
+            PyDict_SetItem(d, PYSTR("memClockRatekHz"), PYUINT(dev->memClockRatekHz));
+            PyDict_SetItem(d, PYSTR("pciBus"), PYUINT(dev->pciBus));
+            PyDict_SetItem(d, PYSTR("pciDev"), PYUINT(dev->pciDev));
+            PyDict_SetItem(d, PYSTR("pciDom"), PYUINT(dev->pciDom));
+            PyDict_SetItem(d, PYSTR("maxBlockRegs"), PYUINT(dev->maxBlockRegs));
+            PyDict_SetItem(d, PYSTR("numMultiProcs"), PYUINT(dev->numMultiProcs));
+            PyDict_SetItem(d, PYSTR("maxThreadPerMultiProc"), PYUINT(dev->maxThreadPerMultiProc));
+            PyDict_SetItem(d, PYSTR("memBusWidth"), PYUINT(dev->memBusWidth));
+            PyDict_SetItem(d, PYSTR("unifiedAddrSpace"), PYUINT(dev->unifiedAddrSpace));
+            PyDict_SetItem(d, PYSTR("ecc"), PYUINT(dev->ecc));
+            PyDict_SetItem(d, PYSTR("asyncEngines"), PYUINT(dev->asyncEngines));
+            PyDict_SetItem(d, PYSTR("mapHostMem"), PYUINT(dev->mapHostMem));
+            PyDict_SetItem(d, PYSTR("integrated"), PYUINT(dev->integrated));
+
+            PyObject *maxThreadsDim = PyList_New(3);
+            PyList_SET_ITEM(maxThreadsDim, 0, PYUINT(dev->maxThreadsDim[0]));
+            PyList_SET_ITEM(maxThreadsDim, 1, PYUINT(dev->maxThreadsDim[1]));
+            PyList_SET_ITEM(maxThreadsDim, 2, PYUINT(dev->maxThreadsDim[2]));
+            PyDict_SetItem(d, PYSTR("maxThreadsDim"), maxThreadsDim);
+
+            PyObject *maxGridSize = PyList_New(3);
+            PyList_SET_ITEM(maxGridSize, 0, PYUINT(dev->maxGridSize[0]));
+            PyList_SET_ITEM(maxGridSize, 1, PYUINT(dev->maxGridSize[1]));
+            PyList_SET_ITEM(maxGridSize, 2, PYUINT(dev->maxGridSize[2]));
+            PyDict_SetItem(d, PYSTR("maxGridSize"), maxGridSize);
+
+            PyList_SET_ITEM(l, (Py_ssize_t)i, d);
+        }
+        return l;
+    }
+    Py_RETURN_NONE;
+}
+
+/*
+################################################################################
+# Nvmon Marker API related functions
+################################################################################
+*/
+
+static PyObject *
+likwid_gpumarkerinit(PyObject *self, PyObject *args)
+{
+    likwid_gpuMarkerInit();
+    Py_RETURN_NONE;
+}
+
+
+static PyObject *
+likwid_gpumarkerregisterregion(PyObject *self, PyObject *args)
+{
+    const char *regiontag;
+    int ret;
+    if (!PyArg_ParseTuple(args, "s", &regiontag))
+        return NULL;
+
+    ret = likwid_gpuMarkerRegisterRegion(regiontag);
+    return Py_BuildValue("i", ret);
+}
+
+static PyObject *
+likwid_gpumarkerstartregion(PyObject *self, PyObject *args)
+{
+    const char *regiontag;
+    int ret;
+    if (!PyArg_ParseTuple(args, "s", &regiontag))
+        return NULL;
+
+    ret = likwid_gpuMarkerStartRegion(regiontag);
+    return Py_BuildValue("i", ret);
+}
+
+static PyObject *
+likwid_gpumarkerstopregion(PyObject *self, PyObject *args)
+{
+    const char *regiontag;
+    int ret;
+    if (!PyArg_ParseTuple(args, "s", &regiontag))
+        return NULL;
+
+    ret = likwid_gpuMarkerStopRegion(regiontag);
+    return Py_BuildValue("i", ret);
+}
+
+static PyObject *
+likwid_gpumarkergetregion(PyObject *self, PyObject *args)
+{
+    int i;
+    int currentGroup = 0;
+    const char *regiontag = NULL;
+    int nr_events = 0;
+    double* events = NULL;
+    double time = 0;
+    int count = 0;
+    int nr_gpus = 0;
+    Py_ssize_t pyLen = 0;
+    PyObject *pyList;
+    if (!PyArg_ParseTuple(args, "s", &regiontag))
+        return NULL;
+    currentGroup = nvmon_getIdOfActiveGroup();
+    nr_events = nvmon_getNumberOfEvents(currentGroup);
+    events = (double*) malloc(nr_events * sizeof(double));
+    if (events == NULL)
+    {
+        return NULL;
+    }
+    for (i = 0; i < nr_events; i++)
+    {
+        events[i] = 0.0;
+    }
+    pyLen = (Py_ssize_t)nr_events;
+    pyList = PyList_New(pyLen);
+    likwid_gpuMarkerGetRegion(regiontag, &nr_gpus, &nr_events, events, &time, &count);
+    for (i=0; i< nr_events; i++)
+    {
+        PyList_SET_ITEM(pyList, (Py_ssize_t)i, Py_BuildValue("d", events[i]));
+    }
+    free(events);
+    return Py_BuildValue("iiOdi", nr_gpus, nr_events, pyList, time, count);
+}
+
+static PyObject *
+likwid_gpumarkernextgroup(PyObject *self, PyObject *args)
+{
+    likwid_gpuMarkerNextGroup();
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+likwid_gpumarkerresetregion(PyObject *self, PyObject *args)
+{
+    const char *regiontag;
+    int ret;
+    if (!PyArg_ParseTuple(args, "s", &regiontag))
+        return NULL;
+
+    ret = likwid_gpuMarkerResetRegion(regiontag);
+    return Py_BuildValue("i", ret);
+}
+
+
+static PyObject *
+likwid_gpumarkerclose(PyObject *self, PyObject *args)
+{
+    likwid_gpuMarkerClose();
+    Py_RETURN_NONE;
+}
+
+
+/*
+################################################################################
+# Nvmon related functions
+################################################################################
+*/
+
+static PyObject *
+likwid_nvmon_init(PyObject *self, PyObject *args)
+{
+    int ret, i;
+    int nrGpus = 0;
+    PyObject * pyList;
+
+    if (gpuTopology_initialized == 0)
+    {
+        gputopology_init();
+        gpuTopology_initialized = 1;
+        gputopo = get_gpuTopology();
+    }
+    if ((gpuTopology_initialized) && (gputopo == NULL))
+    {
+        gputopo = get_gpuTopology();
+    }
+
+    PyArg_ParseTuple(args, "O!", &PyList_Type, &pyList);
+    if (pyList == NULL)
+    {
+        printf("No function argument\n");
+        return PYINT(1);
+    }
+    if (!PyList_Check(pyList))
+    {
+        printf("Function argument is no list\n");
+        return PYINT(1);
+    }
+    nrGpus = PyList_Size(pyList);
+    int * gpulist = malloc(nrGpus * sizeof(int));
+    if (!gpulist)
+    {
+        printf("Cannot allocate space for gpu list\n");
+        return PYINT(1);
+    }
+    for (i=0; i<nrGpus; i++)
+    {
+        int size = 0;
+#if (PY_MAJOR_VERSION == 2)
+        size = (int)PyInt_AsSsize_t(PyList_GetItem(pyList, i));
+#endif
+#if (PY_MAJOR_VERSION == 3)
+        size = (int)PyLong_AsSsize_t(PyList_GetItem(pyList, i));
+#endif
+        gpulist[i] = size;
+    }
+    if (nvmon_initialized == 0)
+    {
+        ret = nvmon_init(nrGpus, &(gpulist[0]));
+        if (ret != 0)
+        {
+            free(cpulist);
+            printf("Initialization of PerfMon module failed.\n");
+            return PYINT(1);
+        }
+        nvmon_initialized = 1;
+    }
+    free(gpulist);
+    return PYINT(0);
+}
+
+static PyObject *
+likwid_nvmon_addEventSet(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        PYINT(-1);
+    }
+    const char* tmpString;
+    int groupId;
+    PyArg_ParseTuple(args, "s", &tmpString);
+    groupId = nvmon_addEventSet((char*)tmpString);
+    return PYINT(groupId);
+}
+
+static PyObject *
+likwid_nvmon_setupCounters(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        PYINT(-1);
+    }
+    int groupId, ret = 0;
+    PyArg_ParseTuple(args, "i", &groupId);
+    ret = nvmon_setupCounters(groupId);
+    return PYINT(ret);
+}
+
+static PyObject *
+likwid_nvmon_startCounters(PyObject *self, PyObject *args)
+{
+    int ret;
+    if (nvmon_initialized == 0)
+    {
+        PYINT(-1);
+    }
+    ret = nvmon_startCounters();
+    return PYINT(ret);
+}
+
+static PyObject *
+likwid_nvmon_stopCounters(PyObject *self, PyObject *args)
+{
+    int ret;
+    if (nvmon_initialized == 0)
+    {
+        PYINT(-1);
+    }
+    ret = nvmon_stopCounters();
+    return PYINT(ret);
+}
+
+static PyObject *
+likwid_nvmon_readCounters(PyObject *self, PyObject *args)
+{
+    int ret;
+    if (nvmon_initialized == 0)
+    {
+        PYINT(-1);
+    }
+    ret = nvmon_readCounters();
+    return PYINT(ret);
+}
+
+static PyObject *
+likwid_nvmon_switchGroup(PyObject *self, PyObject *args)
+{
+    int ret = 0, newgroup;
+    if (nvmon_initialized == 0)
+    {
+        PYINT(-1);
+    }
+    PyArg_ParseTuple(args, "i", &newgroup);
+    if (newgroup >= nvmon_getNumberOfGroups())
+    {
+        newgroup = 0;
+    }
+    if (newgroup == nvmon_getIdOfActiveGroup())
+    {
+        return PYINT(-1);
+    }
+    ret = nvmon_switchActiveGroup(newgroup);
+    return PYINT(ret);
+}
+
+static PyObject *
+likwid_nvmon_finalize(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 1)
+    {
+        nvmon_finalize();
+        nvmon_initialized = 0;
+    }
+    if (gpuTopology_initialized == 1)
+    {
+        topology_gpu_finalize();
+        gpuTopology_initialized = 0;
+        gputopo = NULL;
+    }
+    return PYINT(0);
+}
+
+static PyObject *
+likwid_nvmon_getResult(PyObject *self, PyObject *args)
+{
+    int g, e, t;
+    double result;
+    PyArg_ParseTuple(args, "iii", &g, &e, &t);
+    result = nvmon_getResult(g, e, t);
+    return Py_BuildValue("d", result);
+}
+
+static PyObject *
+likwid_nvmon_getLastResult(PyObject *self, PyObject *args)
+{
+    int g, e, t;
+    double result;
+    PyArg_ParseTuple(args, "iii", &g, &e, &t);
+    result = nvmon_getLastResult(g, e, t);
+    return Py_BuildValue("d", result);
+}
+
+static PyObject *
+likwid_nvmon_getMetric(PyObject *self, PyObject *args)
+{
+    int g, m, t;
+    double result;
+    PyArg_ParseTuple(args, "iii", &g, &m, &t);
+    result = nvmon_getMetric(g, m, t);
+    return Py_BuildValue("d", result);
+}
+
+static PyObject *
+likwid_nvmon_getLastMetric(PyObject *self, PyObject *args)
+{
+    int g, m, t;
+    double result = 0.0;
+    PyArg_ParseTuple(args, "iii", &g, &m, &t);
+    result = nvmon_getLastMetric(g, m, t);
+    return Py_BuildValue("d", result);
+}
+
+static PyObject *
+likwid_nvmon_getNumberOfGroups(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        return 0;
+    }
+    return PYINT(nvmon_getNumberOfGroups());
+}
+
+static PyObject *
+likwid_nvmon_getIdOfActiveGroup(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        return 0;
+    }
+    return PYINT(nvmon_getIdOfActiveGroup());
+}
+
+static PyObject *
+likwid_nvmon_getNumberOfGpus(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        return 0;
+    }
+    return PYINT(nvmon_getNumberOfGPUs());
+}
+
+static PyObject *
+likwid_nvmon_getTimeOfGroup(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        return 0;
+    }
+    int groupId;
+    PyArg_ParseTuple(args, "i", &groupId);
+    return Py_BuildValue("d", nvmon_getTimeOfGroup(groupId));
+}
+
+static PyObject *
+likwid_nvmon_getNumberOfEvents(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        return 0;
+    }
+    int groupId;
+    PyArg_ParseTuple(args, "i", &groupId);
+    return PYINT(nvmon_getNumberOfEvents(groupId));
+}
+
+static PyObject *
+likwid_nvmon_getNumberOfMetrics(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        return 0;
+    }
+    int groupId;
+    PyArg_ParseTuple(args, "i", &groupId);
+    return PYINT(nvmon_getNumberOfMetrics(groupId));
+}
+
+static PyObject *
+likwid_nvmon_getNameOfEvent(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        return 0;
+    }
+    int g, e;
+    PyArg_ParseTuple(args, "ii", &g, &e);
+    return PYSTR(nvmon_getEventName(g,e));
+}
+
+static PyObject *
+likwid_nvmon_getNameOfCounter(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        return 0;
+    }
+    int g, c;
+    PyArg_ParseTuple(args, "ii", &g, &c);
+    return PYSTR(nvmon_getCounterName(g,c));
+}
+
+static PyObject *
+likwid_nvmon_getNameOfMetric(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        return 0;
+    }
+    int g, m;
+    PyArg_ParseTuple(args, "ii", &g, &m);
+    return PYSTR(nvmon_getMetricName(g,m));
+}
+
+static PyObject *
+likwid_nvmon_getNameOfGroup(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        return 0;
+    }
+    int groupId;
+    PyArg_ParseTuple(args, "i", &groupId);
+    return PYSTR(nvmon_getGroupName(groupId));
+}
+
+static PyObject *
+likwid_nvmon_getShortInfoOfGroup(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        return 0;
+    }
+    int groupId;
+    PyArg_ParseTuple(args, "i", &groupId);
+    return PYSTR(nvmon_getGroupInfoShort(groupId));
+}
+
+static PyObject *
+likwid_nvmon_getLongInfoOfGroup(PyObject *self, PyObject *args)
+{
+    if (nvmon_initialized == 0)
+    {
+        return 0;
+    }
+    int groupId;
+    PyArg_ParseTuple(args, "i", &groupId);
+    return PYSTR(nvmon_getGroupInfoLong(groupId));
+}
+
+static PyObject *
+likwid_nvmon_getGroups(PyObject *self, PyObject *args)
+{
+    int i, ret;
+    char** tmp, **infos, **longs;
+    PyObject *l;
+    if (gpuTopology_initialized == 0)
+    {
+        topology_gpu_init();
+        gpuTopology_initialized = 1;
+    }
+    if (gpuTopology_initialized && gputopo == NULL)
+    {
+        gputopo = get_gpuTopology();
+    }
+    ret = nvmon_getGroups(&tmp, &infos, &longs);
+    if (ret > 0)
+    {
+        l = PyList_New(ret);
+        for(i=0;i<ret;i++)
+        {
+            PyObject *d = PyDict_New();
+            PyDict_SetItem(d, PYSTR("Name"), PYSTR(tmp[i]));
+            PyDict_SetItem(d, PYSTR("Info"), PYSTR(infos[i]));
+            PyDict_SetItem(d, PYSTR("Long"), PYSTR(longs[i]));
+            PyList_SET_ITEM(l, (Py_ssize_t)i, d);
+        }
+        nvmon_returnGroups(ret, tmp, infos, longs);
+    }
+    else
+    {
+        l = PyList_New(0);
+    }
+    return l;
+}
+
+static PyObject *
+likwid_nvmon_setverbosity(PyObject *self, PyObject *args)
+{
+    int verbosity;
+    if (!PyArg_ParseTuple(args, "i", &verbosity))
+        return NULL;
+    if (verbosity >= DEBUGLEV_ONLY_ERROR && verbosity <= DEBUGLEV_DEVELOP)
+    {
+        nvmon_setVerbosity(verbosity);
+        return Py_BuildValue("i", verbosity);
+    }
+    return Py_BuildValue("i", -1);
+}
+
+static PyObject *
+likwid_nvmon_getEventsOfGpu(PyObject *self, PyObject *args)
+{
+    int g;
+    if (!PyArg_ParseTuple(args, "i", &g))
+        Py_RETURN_NONE;
+    if (gpuTopology_initialized == 0)
+    {
+        topology_gpu_init();
+        gpuTopology_initialized = 1;
+    }
+    if (gpuTopology_initialized && gputopo == NULL)
+    {
+        gputopo = get_gpuTopology();
+    }
+    if (g < 0 || g >= gputopo->numDevices)
+        Py_RETURN_NONE;
+    NvmonEventList_t l = NULL;
+
+    int num_events = nvmon_getEventsOfGpu(g, &l);
+    if (num_events > 0)
+    {
+        PyObject *o = PyList_New(l->numEvents);
+
+        for (int i = 0; i < l->numEvents; i++)
+        {
+            PyObject *d = PyDict_New();
+            PyDict_SetItem(d, PYSTR("name"), PYSTR(l->events[i].name));
+            PyDict_SetItem(d, PYSTR("desc"), PYSTR(l->events[i].desc));
+            PyDict_SetItem(d, PYSTR("limit"), PYSTR(l->events[i].limit));
+            PyList_SET_ITEM(o, (Py_ssize_t)i, d);
+        }
+        nvmon_returnEventsOfGpu(l);
+        return o;
+    }
+    Py_RETURN_NONE;
+}
+
+#endif
+
 static PyMethodDef LikwidMethods[] = {
+    {"likwidversion", likwid_lversion, METH_VARARGS, "Get the likwid version numbers."},
     {"markerinit", likwid_markerinit, METH_VARARGS, "Initialize the LIKWID Marker API."},
     {"markerthreadinit", likwid_markerthreadinit, METH_VARARGS, "Initialize threads for the LIKWID Marker API."},
     {"markerregisterregion", likwid_markerregisterregion, METH_VARARGS, "Register a region to the LIKWID Marker API. Optional"},
@@ -1789,6 +2538,7 @@ static PyMethodDef LikwidMethods[] = {
     {"getcpuclockcurrent", likwid_freqGetCpuClockCurrent, METH_VARARGS, "Returns the current CPU frequency (in Hz) of the given CPU."},
     {"getcpuclockmax", likwid_freqGetCpuClockMax, METH_VARARGS, "Returns the maximal CPU frequency (in Hz) of the given CPU."},
     {"getcpuclockmin", likwid_freqGetCpuClockMin, METH_VARARGS, "Returns the minimal CPU frequency (in Hz) of the given CPU."},
+
     {"setcpuclockmax", likwid_freqSetCpuClockMax, METH_VARARGS, "Sets the maximal CPU frequency (in Hz) of the given CPU."},
     {"setcpuclockmin", likwid_freqSetCpuClockMin, METH_VARARGS, "Sets the minimal CPU frequency (in Hz) of the given CPU."},
     {"getgovernor", likwid_freqGetGovernor, METH_VARARGS, "Returns the CPU frequency govneror of the given CPU."},
@@ -1802,6 +2552,58 @@ static PyMethodDef LikwidMethods[] = {
     {"getuncoreclockmin", likwid_freqGetUncoreClockMin, METH_VARARGS, "Returns the minimal Uncore frequency (in Hz) of the given CPU socket."},
     {"setuncoreclockmax", likwid_freqSetUncoreClockMax, METH_VARARGS, "Sets the maximal Uncore frequency (in Hz) of the given CPU socket."},
     {"setuncoreclockmin", likwid_freqSetUncoreClockMin, METH_VARARGS, "Sets the minimal Uncore frequency (in Hz) of the given CPU socket."},
+#if (LIKWID_MAJOR == 5)
+    /* CPU frequency functions (additions for LIKWID 5) */
+    {"freqinit", likwid_freqInit, METH_VARARGS, "Initializes the frequency module"},
+    {"freqfinalize", likwid_freqFinalize, METH_VARARGS, "Finalizes the frequency module"},
+    {"getconfcpuclockmax", likwid_freqGetConfCpuClockMax, METH_VARARGS, "Returns the maximal configurable CPU frequency (in Hz) of the given CPU."},
+    {"getconfcpuclockmin", likwid_freqGetConfCpuClockMin, METH_VARARGS, "Returns the minimal configurable CPU frequency (in Hz) of the given CPU."},
+    /* GPU functions */
+#ifdef LIKWID_NVMON
+    {"gpustr_to_gpulist", likwid_gpustr_to_gpulist, METH_VARARGS, "Translate gpu string to list of gpus."},
+    {"initgputopology", likwid_initgputopology, METH_VARARGS, "Initialize the topology module for NVIDIA GPUs."},
+    {"finalizegputopology", likwid_finalizegputopology, METH_VARARGS, "Finalize the topology module for NVIDIA GPUs."},
+    {"getgputopology", likwid_getgputopology, METH_VARARGS, "Get the topology information for the current system for NVIDIA GPUs."},
+    /* Nvmon Marker API functions */
+    {"gpumarkerinit", likwid_gpumarkerinit, METH_VARARGS, "Initialize the LIKWID Nvmon Marker API."},
+    {"gpumarkerregisterregion", likwid_gpumarkerregisterregion, METH_VARARGS, "Register a region to the LIKWID Nvmon Marker API. Optional"},
+    {"gpumarkerstartregion", likwid_gpumarkerstartregion, METH_VARARGS, "Start a Nvmon code region."},
+    {"gpumarkerstopregion", likwid_gpumarkerstopregion, METH_VARARGS, "Stop a Nvmon code region."},
+    {"gpumarkergetregion", likwid_gpumarkergetregion, METH_VARARGS, "Get the current results for a Nvmon code region."},
+    {"gpumarkernextgroup", likwid_gpumarkernextgroup, METH_VARARGS, "Switch to next Nvmon event set."},
+    {"gpumarkerclose", likwid_gpumarkerclose, METH_VARARGS, "Close the Nvmon Marker API and write results to file."},
+    {"gpumarkerreset", likwid_gpumarkerresetregion, METH_VARARGS, "Reset the values of the Nvmon code region to 0"},
+    /* Nvmon functions */
+    {"nvinit", likwid_nvmon_init, METH_VARARGS, "Initialize the whole Likwid Nvmon system including Nvmon Performance Monitoring module."},
+    {"nvaddeventset", likwid_nvmon_addEventSet, METH_VARARGS, "Add an Nvmon event set to LIKWID."},
+    {"nvsetup", likwid_nvmon_setupCounters, METH_VARARGS, "Setup measuring an Nvmon event set with LIKWID."},
+    {"nvstart", likwid_nvmon_startCounters, METH_VARARGS, "Start measuring an Nvmon event set with LIKWID."},
+    {"nvstop", likwid_nvmon_stopCounters, METH_VARARGS, "Stop measuring an Nvmon event set with LIKWID."},
+    {"nvread", likwid_nvmon_readCounters, METH_VARARGS, "Read the current values of the configured Nvmon event set with LIKWID."},
+    {"nvswitch", likwid_nvmon_switchGroup, METH_VARARGS, "Switch the currently set up Nvmon group."},
+    {"nvfinalize", likwid_nvmon_finalize, METH_VARARGS, "Finalize the whole Likwid Nvmon system including Nvmon Performance Monitoring module."},
+    {"nvgetresult", likwid_nvmon_getResult, METH_VARARGS, "Get the current Nvmon result of a measurement."},
+    {"nvgetlastresult", likwid_nvmon_getLastResult, METH_VARARGS, "Get the Nvmon result of the last measurement cycle."},
+    {"nvgetmetric", likwid_nvmon_getMetric, METH_VARARGS, "Get the current Nvmon result of a derived metric."},
+    {"nvgetlastmetric", likwid_nvmon_getLastMetric, METH_VARARGS, "Get the current Nvmon result of a derived metric with values from the last measurement cycle."},
+    {"nvgetnumberofgroups", likwid_nvmon_getNumberOfGroups, METH_VARARGS, "Get the amount of currently configured Nvmon groups."},
+    {"nvgetnumberofevents", likwid_nvmon_getNumberOfEvents, METH_VARARGS, "Get the amount of events in a Nvmon groups."},
+    {"nvgetnumberofmetrics", likwid_nvmon_getNumberOfMetrics, METH_VARARGS, "Get the amount of events in a Nvmon groups."},
+    {"nvgetnumberofgpus", likwid_nvmon_getNumberOfGpus, METH_VARARGS, "Get the amount of configured GPUs."},
+    {"nvgetidofactivegroup", likwid_nvmon_getIdOfActiveGroup, METH_VARARGS, "Get the ID of currently active Nvmon group."},
+    {"nvgettimeofgroup", likwid_nvmon_getTimeOfGroup, METH_VARARGS, "Get the runtime of a Nvmon group."},
+    {"nvgetgroups", likwid_nvmon_getGroups, METH_VARARGS, "Get a list of all available Nvmon performance groups."},
+    {"nvgetnameofevent", likwid_nvmon_getNameOfEvent, METH_VARARGS, "Return the name of an event in a Nvmon group."},
+    {"nvgetnameofcounter", likwid_nvmon_getNameOfCounter, METH_VARARGS, "Return the name of a counter in a Nvmon group."},
+    {"nvgetnameofmetric", likwid_nvmon_getNameOfMetric, METH_VARARGS, "Return the name of a metric in a Nvmon group."},
+    {"nvgetnameofgroup", likwid_nvmon_getNameOfGroup, METH_VARARGS, "Return the name of a Nvmon group."},
+    {"nvgetshortinfoofgroup", likwid_nvmon_getShortInfoOfGroup, METH_VARARGS, "Return the short description of a Nvmon group."},
+    {"nvgetlonginfoofgroup", likwid_nvmon_getLongInfoOfGroup, METH_VARARGS, "Return the long description of a Nvmon group."},
+    {"nvgeteventsofgpu", likwid_nvmon_getEventsOfGpu, METH_VARARGS, "Get the events of a gpu."}
+    /* Misc function */
+    {"nvsetverbosity", likwid_nvmon_setverbosity, METH_VARARGS, "Set the verbosity for the LIKWID Nvmon library."},
+#endif
+#endif
     {NULL, NULL, 0, NULL}
 };
 
@@ -1812,14 +2614,16 @@ initpylikwid(void)
     (void) Py_InitModule("pylikwid", LikwidMethods);
 }
 #endif
+
 #if (PY_MAJOR_VERSION == 3)
 static struct PyModuleDef pylikwidmodule = {
     PyModuleDef_HEAD_INIT,
-    "pylikwid",   /* name of module */
-    NULL, /* module documentation, may be NULL */
-    -1,       /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
-    LikwidMethods
+    .m_name = "pylikwid",   /* name of module */
+    .m_doc = NULL, /* module documentation, may be NULL */
+    .m_size = -1,       /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    .m_methods = LikwidMethods,
 };
+
 PyMODINIT_FUNC
 PyInit_pylikwid(void)
 {

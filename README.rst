@@ -388,6 +388,147 @@ Marker API result file reader
    count for the region identified by ``rid``, the metric index ``midx``
    and the thread index ``tidx``
 
+GPU Topology (if LIKWID is built with Nvidia interface)
+-------------------------------------------------------
+
+-  ``pylikwid.initgputopology()``: Initialize the topology module (reads in
+   system topology)
+
+-  ``topolist = pylikwid.getgputopology()``: Return a list with the
+   GPU topology of the system. Each GPU is represented by a dict. The entries in
+   the dicts are:
+
+   -  ``devid``: Device identifier for the GPU
+   -  ``numaNode``: The NUMA node identifier the GPU is attached at
+   -  ``name``: Name of the device
+   -  ``mem``: Memory capacity of the device
+   -  ``ccapMajor``: Major number of the compute capability
+   -  ``ccapMinor``: Minor number of the compute capability
+   -  ``maxThreadsDim[3]``: Maximum sizes of each dimension of a block
+   -  ``maxGridSize[3]``: Maximum sizes of each dimension of a grid
+   -  ``maxThreadsPerBlock``: Maximam number of thread per block
+   -  ``sharedMemPerBlock``: Total amount of shared memory available per block
+   -  ``totalConstantMemory``: Total amount of constant memory available on the device
+   -  ``simdWidth``: SIMD width of arithmetic units = warp size
+   -  ``memPitch``: Maximum pitch allowed by the memory copy functions that involve memory regions allocated through cuMemAllocPitch()
+   -  ``regsPerBlock``: Total number of registers available per block
+   -  ``clockRatekHz``: Clock frequency in kilohertz
+   -  ``textureAlign``: Alignment requirement
+   -  ``surfaceAlign``: Alignment requirement for surfaces
+   -  ``l2Size``: L2 cache in bytes. 0 if the device doesn't have L2 cache
+   -  ``memClockRatekHz``: Peak memory clock frequency in kilohertz
+   -  ``pciBus``: PCI bus identifier of the device
+   -  ``pciDev``: PCI device (also known as slot) identifier of the device
+   -  ``pciDom``: PCI domain identifier of the device
+   -  ``maxBlockRegs``: Maximum number of 32-bit registers available to a thread block
+   -  ``numMultiProcs``: Number of multiprocessors on the device
+   -  ``maxThreadPerMultiProc``: Maximum resident threads per multiprocessor
+   -  ``memBusWidth``: Global memory bus width in bits
+   -  ``unifiedAddrSpace``: 1 if the device shares a unified address space with the host, or 0 if not
+   -  ``ecc``: 1 if error correction is enabled on the device, 0 if error correction is disabled or not supported by the device
+   -  ``asyncEngines``: Number of asynchronous engines
+   -  ``mapHostMem``: 1 if the device can map host memory into the CUDA address space
+   -  ``integrated``: 1 if the device is an integrated (motherboard) GPU and 0 if it is a discrete (card) component
+
+-  ``pylikwid.finalizegputopology()``: Delete all information in the
+   topology module
+
+
+Performance Monitoring for Nvidia GPUs (if LIKWID is built with Nvidia interface)
+---------------------------------------------------------------------------------
+
+-  ``pylikwid.nvinit(gpus)``: Initialize the nvmon module for the GPUs
+   given in list ``gpus``
+-  ``pylikwid.nvgetnumberofgpus()``: Return the number of GPUs
+   initialized in the nvmon module
+-  ``pylikwid.nvgetnumberofgroups()``: Return the number of groups
+   currently registered in the nvmon module
+-  ``pylikwid.nvgetgroups()``: Return a list of all available groups. Each
+   list entry is a dict:
+
+   -  ``Name``: Name of the performance group
+   -  ``Short``: Short information about the performance group
+   -  ``Long``: Long description of the performance group
+
+-  ``gid = pylikwid.nvaddeventset(estr)``: Add a performance group or a
+   custom event set to the perfmon module. The ``gid`` is required to
+   specify the event set later
+-  ``pylikwid.nvgetnameofgroup(gid)``: Return the name of the group
+   identified by ``gid``. If it is a custom event set, the name is set
+   to ``Custom``
+-  ``pylikwid.nvgetshortinfoofgroup(gid)``: Return the short information
+   about a performance group
+-  ``pylikwid.nvgetlonginfoofgroup(gid)``: Return the description of a
+   performance group
+-  ``pylikwid.nvgetnumberofevents(gid)``: Return the amount of events in
+   the group
+-  ``pylikwid.nvgetnumberofmetrics(gid)``: Return the amount of derived
+   metrics in the group. Always 0 for custom event sets.
+-  ``pylikwid.nvgetnameofevent(gid, eidx)``: Return the name of the event
+   identified by ``gid`` and the index in the list of events
+-  ``pylikwid.nvgetnameofcounter(gid, eidx)``: Return the name of the
+   counter register identified by ``gid`` and the index in the list of
+   events
+-  ``pylikwid.nvgetnameofmetric(gid, midx)``: Return the name of a derived
+   metric identified by ``gid`` and the index in the list of metrics
+-  ``pylikwid.nvsetup(gid)``: Program the counter registers to measure all
+   events in group ``gid``
+-  ``pylikwid.nvstart()``: Start the counter registers
+-  ``pylikwid.nvstop()``: Stop the counter registers
+-  ``pylikwid.nvread()``: Read the counter registers (stop->read->start)
+-  ``pylikwid.nvswitch(gid)``: Switch to group ``gid``
+   (stop->setup(gid)->start)
+-  ``pylikwid.nvgetidofactivegroup()`` Return the ``gid`` of the currently
+   configured group
+-  ``pylikwid.nvgetresult(gid, eidx, tidx)``: Return the raw counter
+   register result of all measurements identified by group ``gid`` and
+   the indices for event ``eidx`` and thread ``tidx``
+-  ``pylikwid.nvgetlastresult(gid, eidx, tidx)``: Return the raw counter
+   register result of the last measurement cycle identified by group
+   ``gid`` and the indices for event ``eidx`` and thread ``tidx``
+-  ``pylikwid.nvgetmetric(gid, midx, tidx)``: Return the derived metric
+   result of all measurements identified by group ``gid`` and the
+   indices for metric ``midx`` and thread ``tidx``
+-  ``pylikwid.nvgetlastmetric(gid, midx, tidx)``: Return the derived
+   metric result of the last measurement cycle identified by group
+   ``gid`` and the indices for metric ``midx`` and thread ``tidx``
+-  ``pylikwid.nvgettimeofgroup(gid)``: Return the measurement time for
+   group identified by ``gid``
+-  ``pylikwid.nvfinalize()``: Reset all used registers and delete internal
+   measurement results
+
+Nvmon Marker API (if LIKWID is built with Nvidia interface)
+-----------------------------------------------------------
+
+-  ``pylikwid.gpumarkerinit()``: Initialize the Nvmon Marker API of the LIKWID library.
+   Must be called previous to all other functions.
+-  ``rr = pylikwid.gpuregisterregion(regiontag)``: Register a region to the
+   Nvmon Marker API. This is an optional function to reduce the overhead of
+   region registration at ``pylikwid.markerstartregion``. If you don't call
+   ``pylikwid.gpumarkerregisterregion(regiontag)``, the registration is done at
+   ``pylikwid.gpumarkerstartregion(regiontag)``. On success, 0 is return. If you
+   havn't called ``pylikwid.gpumarkerinit()``, a negative number is returned.
+-  ``err = pylikwid.gpumarkerstartregion(regiontag)``: Start measurements under
+   the name ``regiontag``. On success, 0 is return. If you havn't called
+   ``pylikwid.gpumarkerinit()``, a negative number is returned.
+-  ``err = pylikwid.gpumarkerstopregion(regiontag)``: Stop measurements under the
+   name ``regiontag`` again. On success, 0 is return. If you havn't
+   called ``pylikwid.gpumarkerinit()``, a negative number is returned.
+-  ``num_gpus, num_events, events[][], time[], count[] = pylikwid.gpumarkergetregion(regiontag)``:
+   Get the intermediate results of the region identified by
+   ``regiontag``. On success, it returns the number of events in the
+   current group, a list with all the aggregated event results per GPU, the
+   measurement time for the region and the number of calls.
+-  ``pylikwid.gpunextgroup()``: Switch to the next event set in a
+   round-robin fashion. If you have set only one event set on the
+   command line, this function performs no operation.
+-  ``pylikwid.gpumarkerreset(regiontag)``: Reset the values stored using the region
+   name ``regiontag``. On success, 0 is returned.
+-  ``pylikwid.gpumarkerclose()``: Close the connection to the LIKWID Nvmon Marker API
+   and write out measurement data to file. This file will be evaluated
+   by ``likwid-perfctr``.
+
+
 Usage
 =====
 
