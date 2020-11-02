@@ -4,8 +4,8 @@ pylikwid
 Python interface for the C API of LIKWID
 (https://github.com/RRZE-HPC/likwid)
 
-.. image:: https://travis-ci.org/RRZE-HPC/pylikwid.svg?branch=master
-    :target: https://travis-ci.org/RRZE-HPC/pylikwid?branch=master
+.. image:: https://travis-ci.com/RRZE-HPC/pylikwid.svg?branch=master
+    :target: https://travis-ci.com/RRZE-HPC/pylikwid?branch=master
 
 Installation
 ============
