@@ -11,7 +11,6 @@ install:
 - ls -l /usr/local/lib
 - python setup.py build_ext -I /usr/local/include/ -L /usr/local/lib/ -R /usr/local/lib/
 - python setup.py install
-dist: trusty
 sudo: required
 before_install:
 - git clone https://github.com/RRZE-HPC/likwid.git
