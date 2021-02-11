@@ -39,14 +39,15 @@ def find_file(path_iterator):
 
 
 def get_hierarchy():
-    print("Searching for LIKWID installation")
+    print("Searching for LIKWID installation in all folders in $PATH, $LIKWID_PREFIX and /usr/local")
+    print("If you can use LIKWID on the CLI but it is not found, use LIKWID_PREFIX=$(realpath $(dirname $(which likwid-topology))/..)")
     include_path = None
     library_path = None
     library = None
     prefix_path = os.getenv('LIKWID_PREFIX', None)
-    library_pattern = '/lib*/liblikwid.so*'
+    library_pattern = 'lib*/liblikwid.so*'
     if prefix_path is not None:
-        iterator = generic_iglob(prefix_path + library_pattern)
+        iterator = generic_iglob(os.path.join(prefix_path, library_pattern))
         library = find_file(iterator)
         if library is not None:
             library_path = os.path.dirname(library)
@@ -56,8 +57,8 @@ def get_hierarchy():
         while is_searching:
             try:
                 path = next(paths_iterator)
-                prefix_path = os.path.abspath(path + '../')
-                iterator = generic_iglob(prefix_path + library_pattern)
+                prefix_path = os.path.abspath(os.path.join(path, '..'))
+                iterator = generic_iglob(os.path.join(prefix_path, library_pattern))
                 library = find_file(iterator)
                 if library is not None:
                     library_path = os.path.dirname(library)
@@ -66,7 +67,7 @@ def get_hierarchy():
                 is_searching = False
         if library is None:
             prefix_path = '/usr/local'
-            iterator = generic_iglob(prefix_path + library_pattern)
+            iterator = generic_iglob(os.path.join(prefix_path, library_pattern))
             library = find_file(iterator)
             if library is not None:
                 library_path = os.path.dirname(library)
@@ -108,7 +109,7 @@ pylikwid = Extension("pylikwid",
 
 setup(
     name="pylikwid",
-    version="0.4.0",
+    version="0.4.1",
     author="Thomas Roehl",
     author_email="thomas.roehl@googlemail.com",
     description="A Python module to access the function of the LIKWID library",
