@@ -29,7 +29,7 @@ jobs:
         python -m pip install -v -e .
     - name: Test
       run: |
-        export LD_LIBRARY_PATH=/usr/local:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
         echo $PYTHONPATH
         echo $LD_LIBRARY_PATH
         python -c "import pylikwid"
