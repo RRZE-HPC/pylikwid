@@ -28,6 +28,7 @@ jobs:
         python -m pip install -e .
     - name: Test
       run: |
+        export LD_LIBRARY_PATH=/usr/local:$LD_LIBRARY_PATH
         python -c "import pylikwid"
         ./tests/testtopo.py
         ./tests/testpin.py
