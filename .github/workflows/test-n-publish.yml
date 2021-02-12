@@ -26,10 +26,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python setup.py build_ext
-        python -m pip install -e .
+        python -m pip install -e -v .
     - name: Test
       run: |
         export LD_LIBRARY_PATH=/usr/local:$LD_LIBRARY_PATH
+        echo $PYTHONPATH
+        echo $LD_LIBRARY_PATH
         python -c "import pylikwid"
         ./tests/testtopo.py
         ./tests/testpin.py
