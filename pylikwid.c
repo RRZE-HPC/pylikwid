@@ -7,6 +7,10 @@
 #define PYINT(val) (Py_BuildValue("i", val))
 #define PYUINT(val) (Py_BuildValue("I", val))
 
+#ifndef NAN
+#define NAN (0.0/0.0)
+#endif
+
 static int access_initialized = 0;
 static int topo_initialized = 0;
 CpuInfo_t cpuinfo = NULL;
@@ -404,7 +408,7 @@ likwid_getcputopology(PyObject *self, PyObject *args)
     PyDict_SetItem(d, PYSTR("numCoresPerSocket"), PYINT(cputopo->numCoresPerSocket));
     PyDict_SetItem(d, PYSTR("numThreadsPerCore"), PYINT(cputopo->numThreadsPerCore));
     PyDict_SetItem(d, PYSTR("numCacheLevels"), PYINT(cputopo->numCacheLevels));
-    for (i=0; i<cputopo->numHWThreads; i++)
+    for (i = 0; i < (int)cputopo->numHWThreads; i++)
     {
         tmp = PyDict_New();
         PyDict_SetItem(tmp, PYSTR("threadId"), PYUINT(cputopo->threadPool[i].threadId));
@@ -414,7 +418,7 @@ likwid_getcputopology(PyObject *self, PyObject *args)
         PyDict_SetItem(threads, PYINT(i), tmp);
     }
     PyDict_SetItem(d, PYSTR("threadPool"), threads);
-    for (i=0; i<cputopo->numCacheLevels; i++)
+    for (i = 0; i < (int)cputopo->numCacheLevels; i++)
     {
         tmp = PyDict_New();
         PyDict_SetItem(tmp, PYSTR("level"), PYUINT(cputopo->cacheLevels[i].level));
@@ -592,7 +596,7 @@ likwid_initnuma(PyObject *self, PyObject *args)
     PyObject *d = PyDict_New();
     PyObject *nodes = PyDict_New();
     PyDict_SetItem(d, PYSTR("numberOfNodes"), PYINT(numainfo->numberOfNodes));
-    for(i=0;i<numainfo->numberOfNodes;i++)
+    for(i = 0;i < (int)numainfo->numberOfNodes; i++)
     {
         PyObject *n = PyDict_New();
         PyDict_SetItem(n, PYSTR("id"), PYINT(numainfo->nodes[i].id));
@@ -601,13 +605,13 @@ likwid_initnuma(PyObject *self, PyObject *args)
         PyDict_SetItem(n, PYSTR("numberOfProcessors"), PYINT(numainfo->nodes[i].numberOfProcessors));
         PyDict_SetItem(n, PYSTR("numberOfDistances"), PYINT(numainfo->nodes[i].numberOfDistances));
         PyObject *l = PyList_New(numainfo->nodes[i].numberOfProcessors);
-        for(j=0;j<numainfo->nodes[i].numberOfProcessors;j++)
+        for(j = 0; j < (int)numainfo->nodes[i].numberOfProcessors; j++)
         {
             PyList_SET_ITEM(l, (Py_ssize_t)j, PYINT(numainfo->nodes[i].processors[j]));
         }
         PyDict_SetItem(n, PYSTR("processors"), l);
         PyObject *dist = PyList_New(numainfo->nodes[i].numberOfDistances);
-        for(j=0;j<numainfo->nodes[i].numberOfDistances;j++)
+        for(j = 0; j < (int)numainfo->nodes[i].numberOfDistances; j++)
         {
             PyList_SET_ITEM(dist, (Py_ssize_t)j, PYINT(numainfo->nodes[i].distances[j]));
         }
@@ -692,14 +696,14 @@ likwid_initaffinity(PyObject *self, PyObject *args)
     PyDict_SetItem(n, PYSTR("numberOfCoresPerCache"), PYINT(affinity->numberOfCoresPerCache));
     PyDict_SetItem(n, PYSTR("numberOfProcessorsPerCache"), PYINT(affinity->numberOfProcessorsPerCache));
     PyObject *doms = PyDict_New();
-    for(i=0;i<affinity->numberOfAffinityDomains;i++)
+    for(i = 0; i < (int)affinity->numberOfAffinityDomains; i++)
     {
         PyObject *a = PyDict_New();
         PyDict_SetItem(a, PYSTR("tag"), PYSTR(bdata(affinity->domains[i].tag)));
         PyDict_SetItem(a, PYSTR("numberOfProcessors"), PYINT(affinity->domains[i].numberOfProcessors));
         PyDict_SetItem(a, PYSTR("numberOfCores"), PYINT(affinity->domains[i].numberOfCores));
         PyObject *l = PyList_New(affinity->domains[i].numberOfProcessors);
-        for(j=0;j<affinity->domains[i].numberOfProcessors;j++)
+        for(j = 0;j < (int)affinity->domains[i].numberOfProcessors; j++)
         {
             PyList_SET_ITEM(l, (Py_ssize_t)j, PYINT(affinity->domains[i].processorList[j]));
         }
@@ -841,7 +845,10 @@ likwid_getClockCycles(PyObject *self, PyObject *args)
 {
     TimerData timer;
     uint64_t start,stop;
-    PyArg_ParseTuple(args, "KK", &start, &stop);
+    if (!PyArg_ParseTuple(args, "KK", &start, &stop))
+    {
+        Py_RETURN_NONE;
+    }
     if (timer_initialized == 0)
     {
         timer_init();
@@ -855,7 +862,10 @@ likwid_getClock(PyObject *self, PyObject *args)
 {
     TimerData timer;
     uint64_t start,stop;
-    PyArg_ParseTuple(args, "KK", &start, &stop);
+    if (!PyArg_ParseTuple(args, "KK", &start, &stop))
+    {
+        Py_RETURN_NONE;
+    }
     if (timer_initialized == 0)
     {
         timer_init();
@@ -874,8 +884,10 @@ static PyObject *
 likwid_initTemp(PyObject *self, PyObject *args)
 {
     int cpuid;
-    PyArg_ParseTuple(args, "i", &cpuid);
-    thermal_init(cpuid);
+    if (PyArg_ParseTuple(args, "i", &cpuid))
+    {
+        thermal_init(cpuid);
+    }
     Py_RETURN_NONE;
 }
 
@@ -884,8 +896,10 @@ likwid_readTemp(PyObject *self, PyObject *args)
 {
     int cpuid;
     unsigned int data = 0;
-    PyArg_ParseTuple(args, "i", &cpuid);
-    thermal_read(cpuid, &data);
+    if (PyArg_ParseTuple(args, "i", &cpuid))
+    {
+        thermal_read(cpuid, &data);
+    }
     return PYUINT(data);
 }
 
@@ -1014,11 +1028,14 @@ static PyObject *
 likwid_startPower(PyObject *self, PyObject *args)
 {
     PowerData pwrdata;
+    pwrdata.before = 0;
     int cpuId;
     PowerType type;
-    PyArg_ParseTuple(args, "iI", &cpuId, &type);
-    pwrdata.domain = type;
-    power_start(&pwrdata, cpuId, type);
+    if (PyArg_ParseTuple(args, "iI", &cpuId, &type))
+    {
+        pwrdata.domain = type;
+        power_start(&pwrdata, cpuId, type);
+    }
     return Py_BuildValue("I", pwrdata.before);
 }
 
@@ -1026,11 +1043,14 @@ static PyObject *
 likwid_stopPower(PyObject *self, PyObject *args)
 {
     PowerData pwrdata;
+    pwrdata.after = 0;
     int cpuId;
     PowerType type;
-    PyArg_ParseTuple(args, "iI", &cpuId, &type);
-    pwrdata.domain = type;
-    power_stop(&pwrdata, cpuId, type);
+    if (PyArg_ParseTuple(args, "iI", &cpuId, &type))
+    {
+        pwrdata.domain = type;
+        power_stop(&pwrdata, cpuId, type);
+    }
     return Py_BuildValue("I", pwrdata.after);
 }
 
@@ -1038,8 +1058,13 @@ static PyObject *
 likwid_getPower(PyObject *self, PyObject *args)
 {
     PowerData pwrdata;
-    PyArg_ParseTuple(args, "III", &pwrdata.before, &pwrdata.after, &pwrdata.domain);
-    double energy = power_printEnergy(&pwrdata);
+    double energy = 0.0;
+    pwrdata.before = 0;
+    pwrdata.after = 0;
+    if (PyArg_ParseTuple(args, "III", &pwrdata.before, &pwrdata.after, &pwrdata.domain))
+    {
+        energy = power_printEnergy(&pwrdata);
+    }
     return Py_BuildValue("d", energy);
 }
 
@@ -1081,10 +1106,10 @@ likwid_init(PyObject *self, PyObject *args)
     {
         numainfo = get_numaTopology();
     }
-    PyArg_ParseTuple(args, "O!", &PyList_Type, &pyList);
-    if (pyList == NULL)
+    ret = PyArg_ParseTuple(args, "O!", &PyList_Type, &pyList);
+    if (pyList == NULL || ret == 0)
     {
-        printf("No function argument\n");
+        printf("No or wrong function argument: List required\n");
         return PYINT(1);
     }
     if (!PyList_Check(pyList))
@@ -1134,9 +1159,11 @@ likwid_addEventSet(PyObject *self, PyObject *args)
         PYINT(-1);
     }
     const char* tmpString;
-    int groupId;
-    PyArg_ParseTuple(args, "s", &tmpString);
-    groupId = perfmon_addEventSet((char*)tmpString);
+    int groupId = -1;
+    if (PyArg_ParseTuple(args, "s", &tmpString))
+    {
+        groupId = perfmon_addEventSet((char*)tmpString);
+    }
     return PYINT(groupId);
 }
 
@@ -1147,9 +1174,11 @@ likwid_setupCounters(PyObject *self, PyObject *args)
     {
         PYINT(-1);
     }
-    int groupId, ret = 0;
-    PyArg_ParseTuple(args, "i", &groupId);
-    ret = perfmon_setupCounters(groupId);
+    int groupId, ret = -1;
+    if (PyArg_ParseTuple(args, "i", &groupId))
+    {
+        ret = perfmon_setupCounters(groupId);
+    }
     return PYINT(ret);
 }
 
@@ -1192,60 +1221,53 @@ likwid_readCounters(PyObject *self, PyObject *args)
 static PyObject *
 likwid_readCountersCpu(PyObject *self, PyObject *args)
 {
-    int ret;
-    if (perfmon_initialized == 0)
+    int ret = -1;
+    if (perfmon_initialized > 0 && PyArg_ParseTuple(args, "i", &ret))
     {
-        PYINT(-1);
+        ret = perfmon_readCountersCpu(ret);
     }
-    PyArg_ParseTuple(args, "i", &ret);
-    ret = perfmon_readCountersCpu(ret);
     return PYINT(ret);
 }
 
 static PyObject *
 likwid_readGroupCounters(PyObject *self, PyObject *args)
 {
-    int ret;
-    if (perfmon_initialized == 0)
+    int ret = -1;
+    if (perfmon_initialized > 0 && PyArg_ParseTuple(args, "i", &ret))
     {
-        PYINT(-1);
+        ret = perfmon_readGroupCounters(ret);
     }
-    PyArg_ParseTuple(args, "i", &ret);
-    ret = perfmon_readGroupCounters(ret);
     return PYINT(ret);
 }
 
 static PyObject *
 likwid_readGroupThreadCounters(PyObject *self, PyObject *args)
 {
-    int ret, thread;
-    if (perfmon_initialized == 0)
+    int ret = -1;
+    int thread = 0;
+    if (perfmon_initialized > 0 && PyArg_ParseTuple(args, "ii", &ret, &thread))
     {
-        PYINT(-1);
+        ret = perfmon_readGroupThreadCounters(ret, thread);
     }
-    PyArg_ParseTuple(args, "ii", &ret, &thread);
-    ret = perfmon_readGroupThreadCounters(ret, thread);
     return PYINT(ret);
 }
 
 static PyObject *
 likwid_switchGroup(PyObject *self, PyObject *args)
 {
-    int ret = 0, newgroup;
-    if (perfmon_initialized == 0)
+    int ret = -1;
+    int newgroup = 0;
+    if (perfmon_initialized > 0 && PyArg_ParseTuple(args, "i", &newgroup))
     {
-        PYINT(-1);
+        if (newgroup >= perfmon_getNumberOfGroups())
+        {
+            newgroup = 0;
+        }
+        if (newgroup != perfmon_getIdOfActiveGroup())
+        {
+            ret = perfmon_switchActiveGroup(newgroup);
+        }
     }
-    PyArg_ParseTuple(args, "i", &newgroup);
-    if (newgroup >= perfmon_getNumberOfGroups())
-    {
-        newgroup = 0;
-    }
-    if (newgroup == perfmon_getIdOfActiveGroup())
-    {
-        return PYINT(-1);
-    }
-    ret = perfmon_switchActiveGroup(newgroup);
     return PYINT(ret);
 }
 
@@ -1289,9 +1311,11 @@ static PyObject *
 likwid_getResult(PyObject *self, PyObject *args)
 {
     int g, e, t;
-    double result;
-    PyArg_ParseTuple(args, "iii", &g, &e, &t);
-    result = perfmon_getResult(g, e, t);
+    double result = NAN;
+    if (PyArg_ParseTuple(args, "iii", &g, &e, &t))
+    {
+        result = perfmon_getResult(g, e, t);
+    }
     return Py_BuildValue("d", result);
 }
 
@@ -1299,9 +1323,11 @@ static PyObject *
 likwid_getLastResult(PyObject *self, PyObject *args)
 {
     int g, e, t;
-    double result;
-    PyArg_ParseTuple(args, "iii", &g, &e, &t);
-    result = perfmon_getLastResult(g, e, t);
+    double result = NAN;
+    if (PyArg_ParseTuple(args, "iii", &g, &e, &t))
+    {
+        result = perfmon_getLastResult(g, e, t);
+    }
     return Py_BuildValue("d", result);
 }
 
@@ -1309,9 +1335,11 @@ static PyObject *
 likwid_getMetric(PyObject *self, PyObject *args)
 {
     int g, m, t;
-    double result;
-    PyArg_ParseTuple(args, "iii", &g, &m, &t);
-    result = perfmon_getMetric(g, m, t);
+    double result = NAN;
+    if (PyArg_ParseTuple(args, "iii", &g, &m, &t))
+    {
+        result = perfmon_getMetric(g, m, t);
+    }
     return Py_BuildValue("d", result);
 }
 
@@ -1319,9 +1347,11 @@ static PyObject *
 likwid_getLastMetric(PyObject *self, PyObject *args)
 {
     int g, m, t;
-    double result = 0.0;
-    PyArg_ParseTuple(args, "iii", &g, &m, &t);
-    result = perfmon_getLastMetric(g, m, t);
+    double result = NAN;
+    if (PyArg_ParseTuple(args, "iii", &g, &m, &t))
+    {
+        result = perfmon_getLastMetric(g, m, t);
+    }
     return Py_BuildValue("d", result);
 }
 
@@ -1363,8 +1393,12 @@ likwid_getTimeOfGroup(PyObject *self, PyObject *args)
         return 0;
     }
     int groupId;
-    PyArg_ParseTuple(args, "i", &groupId);
-    return Py_BuildValue("d", perfmon_getTimeOfGroup(groupId));
+    double time = 0.0;
+    if (PyArg_ParseTuple(args, "i", &groupId))
+    {
+        time = perfmon_getTimeOfGroup(groupId);
+    }
+    return Py_BuildValue("d", time);
 }
 
 static PyObject *
@@ -1375,8 +1409,12 @@ likwid_getNumberOfEvents(PyObject *self, PyObject *args)
         return 0;
     }
     int groupId;
-    PyArg_ParseTuple(args, "i", &groupId);
-    return PYINT(perfmon_getNumberOfEvents(groupId));
+    int num_events = 0;
+    if (PyArg_ParseTuple(args, "i", &groupId))
+    {
+        num_events = perfmon_getNumberOfEvents(groupId);
+    }
+    return PYINT(num_events);
 }
 
 static PyObject *
@@ -1387,8 +1425,12 @@ likwid_getNumberOfMetrics(PyObject *self, PyObject *args)
         return 0;
     }
     int groupId;
-    PyArg_ParseTuple(args, "i", &groupId);
-    return PYINT(perfmon_getNumberOfMetrics(groupId));
+    int num_metrics = 0;
+    if (PyArg_ParseTuple(args, "i", &groupId))
+    {
+        num_metrics = perfmon_getNumberOfMetrics(groupId);
+    }
+    return PYINT(num_metrics);
 }
 
 static PyObject *
@@ -1399,8 +1441,12 @@ likwid_getNameOfEvent(PyObject *self, PyObject *args)
         return 0;
     }
     int g, e;
-    PyArg_ParseTuple(args, "ii", &g, &e);
-    return PYSTR(perfmon_getEventName(g,e));
+    char* name = NULL;
+    if (PyArg_ParseTuple(args, "ii", &g, &e))
+    {
+        name = perfmon_getEventName(g,e);
+    }
+    return PYSTR(name);
 }
 
 static PyObject *
@@ -1411,8 +1457,12 @@ likwid_getNameOfCounter(PyObject *self, PyObject *args)
         return 0;
     }
     int g, c;
-    PyArg_ParseTuple(args, "ii", &g, &c);
-    return PYSTR(perfmon_getCounterName(g,c));
+    char* name = NULL;
+    if (PyArg_ParseTuple(args, "ii", &g, &c))
+    {
+        name = perfmon_getCounterName(g,c);
+    }
+    return PYSTR(name);
 }
 
 static PyObject *
@@ -1423,8 +1473,12 @@ likwid_getNameOfMetric(PyObject *self, PyObject *args)
         return 0;
     }
     int g, m;
-    PyArg_ParseTuple(args, "ii", &g, &m);
-    return PYSTR(perfmon_getMetricName(g,m));
+    char* name = NULL;
+    if (PyArg_ParseTuple(args, "ii", &g, &m))
+    {
+        name = perfmon_getMetricName(g, m);
+    }
+    return PYSTR(name);
 }
 
 static PyObject *
@@ -1435,8 +1489,12 @@ likwid_getNameOfGroup(PyObject *self, PyObject *args)
         return 0;
     }
     int groupId;
-    PyArg_ParseTuple(args, "i", &groupId);
-    return PYSTR(perfmon_getGroupName(groupId));
+    char* name = NULL;
+    if (PyArg_ParseTuple(args, "i", &groupId))
+    {
+        name = perfmon_getGroupName(groupId);
+    }
+    return PYSTR(name);
 }
 
 static PyObject *
@@ -1447,8 +1505,12 @@ likwid_getShortInfoOfGroup(PyObject *self, PyObject *args)
         return 0;
     }
     int groupId;
-    PyArg_ParseTuple(args, "i", &groupId);
-    return PYSTR(perfmon_getGroupInfoShort(groupId));
+    char* info = NULL;
+    if (PyArg_ParseTuple(args, "i", &groupId))
+    {
+        info = perfmon_getGroupInfoShort(groupId);
+    }
+    return PYSTR(info);
 }
 
 static PyObject *
@@ -1459,8 +1521,12 @@ likwid_getLongInfoOfGroup(PyObject *self, PyObject *args)
         return 0;
     }
     int groupId;
-    PyArg_ParseTuple(args, "i", &groupId);
-    return PYSTR(perfmon_getGroupInfoLong(groupId));
+    char* info = NULL;
+    if (PyArg_ParseTuple(args, "i", &groupId))
+    {
+        info = perfmon_getGroupInfoLong(groupId);
+    }
+    return PYSTR(info);
 }
 
 static PyObject *
@@ -1505,8 +1571,10 @@ static PyObject *
 likwid_readMarkerFile(PyObject *self, PyObject *args)
 {
     const char* filename;
-    PyArg_ParseTuple(args, "s", &filename);
-    perfmon_readMarkerFile(filename);
+    if (PyArg_ParseTuple(args, "s", &filename))
+    {
+        perfmon_readMarkerFile(filename);
+    }
     Py_RETURN_NONE;
 }
 
@@ -1519,33 +1587,46 @@ likwid_markerNumRegions(PyObject *self, PyObject *args)
 static PyObject *
 likwid_markerRegionGroup(PyObject *self, PyObject *args)
 {
-    int r;
-    PyArg_ParseTuple(args, "i", &r);
-    return PYINT(perfmon_getGroupOfRegion(r));
+    int r = -1;
+    if (PyArg_ParseTuple(args, "i", &r))
+    {
+        r = perfmon_getGroupOfRegion(r);
+    }
+    return PYINT(r);
 }
 
 static PyObject *
 likwid_markerRegionTag(PyObject *self, PyObject *args)
 {
-    int r;
-    PyArg_ParseTuple(args, "i", &r);
-    return PYSTR(perfmon_getTagOfRegion(r));
+    int r = -1;
+    char* tag = NULL;
+    if (PyArg_ParseTuple(args, "i", &r))
+    {
+        tag = perfmon_getTagOfRegion(r);
+    }
+    return PYSTR(tag);
 }
 
 static PyObject *
 likwid_markerRegionEvents(PyObject *self, PyObject *args)
 {
-    int r;
-    PyArg_ParseTuple(args, "i", &r);
-    return PYINT(perfmon_getEventsOfRegion(r));
+    int r = -1;
+    if (PyArg_ParseTuple(args, "i", &r))
+    {
+        r = perfmon_getEventsOfRegion(r);
+    }
+    return PYINT(r);
 }
 
 static PyObject *
 likwid_markerRegionThreads(PyObject *self, PyObject *args)
 {
-    int r;
-    PyArg_ParseTuple(args, "i", &r);
-    return PYINT(perfmon_getThreadsOfRegion(r));
+    int r = -1;
+    if (PyArg_ParseTuple(args, "i", &r))
+    {
+        r = perfmon_getThreadsOfRegion(r);
+    }
+    return PYINT(r);
 }
 
 static PyObject *
@@ -1553,7 +1634,10 @@ likwid_markerRegionCpulist(PyObject *self, PyObject *args)
 {
     int r, ret = 0;
     int* cpulist;
-    PyArg_ParseTuple(args, "i", &r);
+    if (!PyArg_ParseTuple(args, "i", &r))
+    {
+        return PyList_New(0);
+    }
     if (!topo_initialized)
     {
         ret = topology_init();
