@@ -885,6 +885,8 @@ likwid_getClockCycles(PyObject *self, PyObject *args)
         timer_init();
         timer_initialized = 1;
     }
+    timer.start.int64 = start;
+    timer.stop.int64 = stop;
     return Py_BuildValue("K", timer_printCycles(&timer));
 }
 
@@ -902,6 +904,8 @@ likwid_getClock(PyObject *self, PyObject *args)
         timer_init();
         timer_initialized = 1;
     }
+    timer.start.int64 = start;
+    timer.stop.int64 = stop;
     return Py_BuildValue("d", timer_print(&timer));
 }
 
