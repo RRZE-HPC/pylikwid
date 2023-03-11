@@ -2049,7 +2049,7 @@ likwid_gpumarkergetregion(PyObject *self, PyObject *args)
     }
     pyLen = (Py_ssize_t)nr_events;
     pyList = PyList_New(pyLen);
-    likwid_gpuMarkerGetRegion(regiontag, &nr_gpus, &nr_events, events, &time, &count);
+    likwid_gpuMarkerGetRegion(regiontag, &nr_gpus, &nr_events, &events, &time, &count);
     for (i=0; i< nr_events; i++)
     {
         PyList_SET_ITEM(pyList, (Py_ssize_t)i, Py_BuildValue("d", events[i]));
@@ -2101,7 +2101,7 @@ likwid_nvmon_init(PyObject *self, PyObject *args)
 
     if (gpuTopology_initialized == 0)
     {
-        gputopology_init();
+        topology_gpu_init();
         gpuTopology_initialized = 1;
         gputopo = get_gpuTopology();
     }
@@ -2144,7 +2144,7 @@ likwid_nvmon_init(PyObject *self, PyObject *args)
         ret = nvmon_init(nrGpus, &(gpulist[0]));
         if (ret != 0)
         {
-            free(cpulist);
+            free(gpulist);
             printf("Initialization of PerfMon module failed.\n");
             return PYINT(1);
         }
@@ -2438,6 +2438,9 @@ likwid_nvmon_getGroups(PyObject *self, PyObject *args)
 {
     int i, ret;
     char** tmp, **infos, **longs;
+    int gpuId;
+    PyArg_ParseTuple(args, "i", &gpuId);
+    
     PyObject *l;
     if (gpuTopology_initialized == 0)
     {
@@ -2448,7 +2451,7 @@ likwid_nvmon_getGroups(PyObject *self, PyObject *args)
     {
         gputopo = get_gpuTopology();
     }
-    ret = nvmon_getGroups(&tmp, &infos, &longs);
+    ret = nvmon_getGroups(gpuId, &tmp, &infos, &longs);
     if (ret > 0)
     {
         l = PyList_New(ret);
@@ -2483,43 +2486,43 @@ likwid_nvmon_setverbosity(PyObject *self, PyObject *args)
     return Py_BuildValue("i", -1);
 }
 
-static PyObject *
-likwid_nvmon_getEventsOfGpu(PyObject *self, PyObject *args)
-{
-    int g;
-    if (!PyArg_ParseTuple(args, "i", &g))
-        Py_RETURN_NONE;
-    if (gpuTopology_initialized == 0)
-    {
-        topology_gpu_init();
-        gpuTopology_initialized = 1;
-    }
-    if (gpuTopology_initialized && gputopo == NULL)
-    {
-        gputopo = get_gpuTopology();
-    }
-    if (g < 0 || g >= gputopo->numDevices)
-        Py_RETURN_NONE;
-    NvmonEventList_t l = NULL;
+// static PyObject *
+// likwid_nvmon_getEventsOfGpu(PyObject *self, PyObject *args)
+// {
+//     int g;
+//     if (!PyArg_ParseTuple(args, "i", &g))
+//         Py_RETURN_NONE;
+//     if (gpuTopology_initialized == 0)
+//     {
+//         topology_gpu_init();
+//         gpuTopology_initialized = 1;
+//     }
+//     if (gpuTopology_initialized && gputopo == NULL)
+//     {
+//         gputopo = get_gpuTopology();
+//     }
+//     if (g < 0 || g >= gputopo->numDevices)
+//         Py_RETURN_NONE;
+//     NvmonEventList_t l = NULL;
 
-    int num_events = nvmon_getEventsOfGpu(g, &l);
-    if (num_events > 0)
-    {
-        PyObject *o = PyList_New(l->numEvents);
+//     int num_events = nvmon_getEventsOfGpu(g, &l);
+//     if (num_events > 0)
+//     {
+//         PyObject *o = PyList_New(l->numEvents);
 
-        for (int i = 0; i < l->numEvents; i++)
-        {
-            PyObject *d = PyDict_New();
-            PyDict_SetItem(d, PYSTR("name"), PYSTR(l->events[i].name));
-            PyDict_SetItem(d, PYSTR("desc"), PYSTR(l->events[i].desc));
-            PyDict_SetItem(d, PYSTR("limit"), PYSTR(l->events[i].limit));
-            PyList_SET_ITEM(o, (Py_ssize_t)i, d);
-        }
-        nvmon_returnEventsOfGpu(l);
-        return o;
-    }
-    Py_RETURN_NONE;
-}
+//         for (int i = 0; i < l->numEvents; i++)
+//         {
+//             PyObject *d = PyDict_New();
+//             PyDict_SetItem(d, PYSTR("name"), PYSTR(l->events[i].name));
+//             PyDict_SetItem(d, PYSTR("desc"), PYSTR(l->events[i].desc));
+//             PyDict_SetItem(d, PYSTR("limit"), PYSTR(l->events[i].limit));
+//             PyList_SET_ITEM(o, (Py_ssize_t)i, d);
+//         }
+//         nvmon_returnEventsOfGpu(l);
+//         return o;
+//     }
+//     Py_RETURN_NONE;
+// }
 
 #endif
 
@@ -2683,7 +2686,7 @@ static PyMethodDef LikwidMethods[] = {
     {"nvgetnameofgroup", likwid_nvmon_getNameOfGroup, METH_VARARGS, "Return the name of a Nvmon group."},
     {"nvgetshortinfoofgroup", likwid_nvmon_getShortInfoOfGroup, METH_VARARGS, "Return the short description of a Nvmon group."},
     {"nvgetlonginfoofgroup", likwid_nvmon_getLongInfoOfGroup, METH_VARARGS, "Return the long description of a Nvmon group."},
-    {"nvgeteventsofgpu", likwid_nvmon_getEventsOfGpu, METH_VARARGS, "Get the events of a gpu."}
+    // {"nvgeteventsofgpu", likwid_nvmon_getEventsOfGpu, METH_VARARGS, "Get the events of a gpu."},
     /* Misc function */
     {"nvsetverbosity", likwid_nvmon_setverbosity, METH_VARARGS, "Set the verbosity for the LIKWID Nvmon library."},
 #endif

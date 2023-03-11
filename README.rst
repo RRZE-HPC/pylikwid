@@ -18,6 +18,7 @@ and copies it to the proper destination.
     $ git clone https://github.com/RRZE-HPC/pylikwid.git
     $ cd pylikwid
     # Build C interface
+    # NVIDIA functions enabled by -DLIKWID_NVMON
     $ python setup.py build_ext -I <include path for likwid> -L <library path for likwid> -R <library path for likwid>
     # Install module to the proper location
     $ python setup.py install (--prefix=<where to install>)
