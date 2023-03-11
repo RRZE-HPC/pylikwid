@@ -95,6 +95,8 @@ def get_hierarchy():
 
 try:
     LIKWID_PREFIX, LIKWID_LIBPATH, LIKWID_LIB, LIKWID_INCPATH = get_hierarchy()
+    # TODO
+    major, minor, release = (5, 3, 2)
     print(LIKWID_PREFIX, LIKWID_LIBPATH, LIKWID_LIB, LIKWID_INCPATH)
 except Exception as e:
     print(e)
@@ -105,6 +107,7 @@ pylikwid = Extension("pylikwid",
                      include_dirs=[LIKWID_INCPATH],
                      libraries=[LIKWID_LIB],
                      library_dirs=[LIKWID_LIBPATH],
+                     define_macros=[("LIKWID_MAJOR", major), ("LIKWID_MINOR", minor), (("LIKWID_RELEASE", release))],
                      sources=["pylikwid.c"])
 
 setup(
