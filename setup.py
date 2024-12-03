@@ -101,10 +101,27 @@ except Exception as e:
     sys.exit(1)
 
 
+def get_extra_compile_args():
+    extra_args = []
+    likwid_header_path = f"{LIKWID_INCPATH}/likwid.h"
+    with open(likwid_header_path, mode="r") as f:
+        for line in f:
+            if not line.startswith("#define LIKWID_VERSION"):
+                continue
+            major, release, minor = line.split()[-1].strip("\"").split(".")
+            extra_args.extend([
+                f"-DLIKWID_MAJOR={major}",
+                f"-DLIKWID_RELEASE={release}",
+                f"-DLIKWID_MINOR={minor}",
+            ])
+    return extra_args
+
+
 pylikwid = Extension("pylikwid",
                      include_dirs=[LIKWID_INCPATH],
                      libraries=[LIKWID_LIB],
                      library_dirs=[LIKWID_LIBPATH],
+                     extra_compile_args=get_extra_compile_args(),
                      sources=["pylikwid.c"])
 
 setup(
