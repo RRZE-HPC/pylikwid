@@ -114,6 +114,7 @@ def get_extra_compile_args():
                 f"-DLIKWID_RELEASE={release}",
                 f"-DLIKWID_MINOR={minor}",
             ])
+            break
     return extra_args
 
 
