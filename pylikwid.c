@@ -699,7 +699,11 @@ likwid_initaffinity(PyObject *self, PyObject *args)
     for(i = 0; i < (int)affinity->numberOfAffinityDomains; i++)
     {
         PyObject *a = PyDict_New();
+#if (LIKWID_MAJOR == 5 && LIKWID_RELEASE >= 4)
+        PyDict_SetItem(a, PYSTR("tag"), PYSTR(affinity->domains[i].tag));
+#else
         PyDict_SetItem(a, PYSTR("tag"), PYSTR(bdata(affinity->domains[i].tag)));
+#endif
         PyDict_SetItem(a, PYSTR("numberOfProcessors"), PYINT(affinity->domains[i].numberOfProcessors));
         PyDict_SetItem(a, PYSTR("numberOfCores"), PYINT(affinity->domains[i].numberOfCores));
         PyObject *l = PyList_New(affinity->domains[i].numberOfProcessors);
