@@ -103,18 +103,25 @@ except Exception as e:
 
 def get_extra_compile_args():
     extra_args = []
+
+    # Add nvmon definition if set to non-zero value in environment.
+    if os.environ.get("LIKWID_NVMON") not in (None, "0"):
+        extra_args.append("-DLIKWID_NVMON")
+
+    # Add likwid version definitions from likwid.h.
     likwid_header_path = f"{LIKWID_INCPATH}/likwid.h"
-    with open(likwid_header_path, mode="r") as f:
+    with open(likwid_header_path) as f:
         for line in f:
             if not line.startswith("#define LIKWID_VERSION"):
                 continue
-            major, release, minor = line.split()[-1].strip("\"").split(".")
+            major, release, minor = line.split()[-1].strip('"').split(".")
             extra_args.extend([
                 f"-DLIKWID_MAJOR={major}",
                 f"-DLIKWID_RELEASE={release}",
                 f"-DLIKWID_MINOR={minor}",
             ])
             break
+
     return extra_args
 
 
@@ -152,7 +159,7 @@ setup(
     ],
     package_data={
         "pylikwid": ["pylikwid.c", "README.rst", "LICENSE"],
-        "tests": ["tests/*.py"]
+        "tests": ["tests/*.py"],
     },
-    ext_modules=[pylikwid]
+    ext_modules=[pylikwid],
 )
