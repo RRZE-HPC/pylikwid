@@ -44,6 +44,32 @@ likwid_lversion(PyObject *self, PyObject *args)
 
 /*
 ################################################################################
+Compatibility definitions for nvmon naming scheme changes introduced in 5.3.
+################################################################################
+*/
+
+#if defined LIKWID_NVMON && LIKWID_MAJOR == 5 && LIKWID_RELEASE >= 3
+// Functions that were renamed.
+#define gpustr_to_gpulist gpustr_to_gpulist_cuda
+#define topology_gpu_init topology_cuda_init
+#define topology_gpu_finalize topology_cuda_finalize
+#define get_gpuTopology get_cudaTopology
+#define likwid_gpuMarkerInit nvmon_markerInit
+#define likwid_gpuMarkerNextGroup nvmon_markerNextGroup
+#define likwid_gpuMarkerClose nvmon_markerClose
+#define likwid_gpuMarkerStartRegion nvmon_markerStartRegion
+#define likwid_gpuMarkerRegisterRegion nvmon_markerRegisterRegion
+#define likwid_gpuMarkerStartRegion nvmon_markerStartRegion
+#define likwid_gpuMarkerStopRegion nvmon_markerStopRegion
+#define likwid_gpuMarkerResetRegion nvmon_markerResetRegion
+#define likwid_gpuMarkerGetRegion nvmon_markerGetRegion
+// Structs that were renamed.
+#define GpuDevice CudaDevice
+#define GpuTopology_t CudaTopology_t
+#endif
+
+/*
+################################################################################
 # Marker API related functions
 ################################################################################
 */
@@ -765,7 +791,8 @@ likwid_cpustr_to_cpulist(PyObject *self, PyObject *args)
 }
 
 
-#if (LIKWID_MAJOR == 5 && LIKWID_NVMON)
+
+#if LIKWID_MAJOR == 5 && defined LIKWID_NVMON
 static PyObject *
 likwid_gpustr_to_gpulist(PyObject *self, PyObject *args)
 {
@@ -1871,10 +1898,10 @@ likwid_freqGetUncoreClockCurrent(PyObject *self, PyObject *args)
 #endif
 
 
-#if (LIKWID_MAJOR == 5 && LIKWID_NVMON)
+#if LIKWID_MAJOR == 5 && defined LIKWID_NVMON
 static int gpuTopology_initialized = 0;
 static GpuTopology_t gputopo = NULL;
-static int nvmon_initialized = 1;
+static int nvmon_initialized = 0;
 
 static PyObject *
 likwid_initgputopology(PyObject *self, PyObject *args)
@@ -2053,7 +2080,7 @@ likwid_gpumarkergetregion(PyObject *self, PyObject *args)
     }
     pyLen = (Py_ssize_t)nr_events;
     pyList = PyList_New(pyLen);
-    likwid_gpuMarkerGetRegion(regiontag, &nr_gpus, &nr_events, events, &time, &count);
+    likwid_gpuMarkerGetRegion(regiontag, &nr_gpus, &nr_events, &events, &time, &count);
     for (i=0; i< nr_events; i++)
     {
         PyList_SET_ITEM(pyList, (Py_ssize_t)i, Py_BuildValue("d", events[i]));
@@ -2105,7 +2132,7 @@ likwid_nvmon_init(PyObject *self, PyObject *args)
 
     if (gpuTopology_initialized == 0)
     {
-        gputopology_init();
+        topology_gpu_init();
         gpuTopology_initialized = 1;
         gputopo = get_gpuTopology();
     }
@@ -2148,7 +2175,7 @@ likwid_nvmon_init(PyObject *self, PyObject *args)
         ret = nvmon_init(nrGpus, &(gpulist[0]));
         if (ret != 0)
         {
-            free(cpulist);
+            free(gpulist);
             printf("Initialization of PerfMon module failed.\n");
             return PYINT(1);
         }
@@ -2440,7 +2467,16 @@ likwid_nvmon_getLongInfoOfGroup(PyObject *self, PyObject *args)
 static PyObject *
 likwid_nvmon_getGroups(PyObject *self, PyObject *args)
 {
+#if LIKWID_RELEASE >= 1
+    // Since 5.1.0, nvmon_getGroups takes the the gpu id as first argument.
+    int gpuId, i, ret;
+    if (!PyArg_ParseTuple(args, "i", &gpuId))
+    {
+        Py_RETURN_NONE;
+    }
+#else
     int i, ret;
+#endif
     char** tmp, **infos, **longs;
     PyObject *l;
     if (gpuTopology_initialized == 0)
@@ -2452,7 +2488,11 @@ likwid_nvmon_getGroups(PyObject *self, PyObject *args)
     {
         gputopo = get_gpuTopology();
     }
+#if LIKWID_RELEASE >= 1
+    ret = nvmon_getGroups(gpuId, &tmp, &infos, &longs);
+#else
     ret = nvmon_getGroups(&tmp, &infos, &longs);
+#endif
     if (ret > 0)
     {
         l = PyList_New(ret);
@@ -2687,7 +2727,7 @@ static PyMethodDef LikwidMethods[] = {
     {"nvgetnameofgroup", likwid_nvmon_getNameOfGroup, METH_VARARGS, "Return the name of a Nvmon group."},
     {"nvgetshortinfoofgroup", likwid_nvmon_getShortInfoOfGroup, METH_VARARGS, "Return the short description of a Nvmon group."},
     {"nvgetlonginfoofgroup", likwid_nvmon_getLongInfoOfGroup, METH_VARARGS, "Return the long description of a Nvmon group."},
-    {"nvgeteventsofgpu", likwid_nvmon_getEventsOfGpu, METH_VARARGS, "Get the events of a gpu."}
+    {"nvgeteventsofgpu", likwid_nvmon_getEventsOfGpu, METH_VARARGS, "Get the events of a gpu."},
     /* Misc function */
     {"nvsetverbosity", likwid_nvmon_setverbosity, METH_VARARGS, "Set the verbosity for the LIKWID Nvmon library."},
 #endif
