@@ -10,7 +10,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-ver_regex = re.compile(b"so.(\d+)[.]*(\d*)")
+ver_regex = re.compile(r"so.(\d+)[.]*(\d*)")
 
 
 def generic_iglob(pattern):
@@ -88,7 +88,7 @@ def get_hierarchy():
     print("Using LIKWID include directory at {!s}".format(include_path))
     print("Using LIKWID library directory at {!s}".format(library_path))
     print("Using LIKWID library named {!s}".format(library))
-    m = re.match("lib(.*)\.so", os.path.basename(library))
+    m = re.match(r"lib(.*)\.so", os.path.basename(library))
     if m:
         library = m.group(1)
     return prefix_path, library_path, library, include_path
