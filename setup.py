@@ -1,6 +1,5 @@
 import os, os.path, glob, re, sys
-from distutils.core import setup, Extension
-
+from setuptools import setup, Extension
 
 # Utility function to read the README.md file.
 # Used for the long_description.  It"s nice, because now 1) we have a top level
