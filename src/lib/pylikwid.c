@@ -2,6 +2,7 @@
 #include <Python.h>
 
 #include <likwid.h>
+#include <bstrlib.h>
 
 #define PYSTR(str) (Py_BuildValue("s", str))
 #define PYINT(val) (Py_BuildValue("i", val))

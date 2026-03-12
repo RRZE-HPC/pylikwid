@@ -1,6 +1,5 @@
 import os, os.path, glob, re, sys
-from distutils.core import setup, Extension
-
+from setuptools import setup, Extension, find_packages
 
 # Utility function to read the README.md file.
 # Used for the long_description.  It"s nice, because now 1) we have a top level
@@ -103,6 +102,7 @@ except Exception as e:
 
 def get_extra_compile_args():
     extra_args = []
+    
 
     # Add nvmon definition if set to non-zero value in environment.
     if os.environ.get("LIKWID_NVMON") not in (None, "0"):
@@ -121,45 +121,29 @@ def get_extra_compile_args():
                 f"-DLIKWID_MINOR={minor}",
             ])
             break
-
     return extra_args
 
 
 pylikwid = Extension("pylikwid",
-                     include_dirs=[LIKWID_INCPATH],
+                     include_dirs=['src/lib', LIKWID_INCPATH],
                      libraries=[LIKWID_LIB],
                      library_dirs=[LIKWID_LIBPATH],
                      extra_compile_args=get_extra_compile_args(),
-                     sources=["pylikwid.c"])
+                     extra_link_args=get_extra_compile_args(),
+                     sources=["src/lib/pylikwid.c"],
+                     py_limited_api=True
+)
+
+
 
 setup(
     name="pylikwid",
     version="0.4.2",
-    author="Thomas Roehl",
+    author="Thomas Gruber",
     author_email="thomas.roehl@googlemail.com",
-    description="A Python module to access the function of the LIKWID library",
-    long_description=read("README.rst"),
+    description="A Python module to access the functions of the LIKWID library",
     license="GPLv2",
-    keywords="hpc performance benchmark analysis",
-    url="https://github.com/RRZE-HPC/pylikwid",
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Intended Audience :: Developers",
-        "Intended Audience :: Science/Research",
-        "Topic :: Scientific/Engineering",
-        "Topic :: Software Development",
-        "Topic :: Utilities",
-        "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
-    ],
-    package_data={
-        "pylikwid": ["pylikwid.c", "README.rst", "LICENSE"],
-        "tests": ["tests/*.py"],
-    },
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
     ext_modules=[pylikwid],
 )

@@ -1,0 +1,40 @@
+# pyproject.toml
+
+[build-system]
+requires        = ['setuptools>=61.0', "wheel"]
+build-backend   = 'setuptools.build_meta'
+
+[project]
+name            = 'pylikwid'
+version         = "0.4.2"
+description     = "A Python module to access the functions of the LIKWID library"
+requires-python = ">=3.8"
+authors = [
+    { name = "Thomas Gruber", email = "thomas.roehl@googlemail.com" }
+]
+maintainers = [
+    { name = "Thomas Gruber", email = "thomas.roehl@googlemail.com" }
+]
+keywords = ["hpc", "performance", "benchmark", "analysis"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 2",
+]
+readme = "README.rst"
+dynamic = ["license"]
+
+[project.urls]
+Repository = "https://github.com/RRZE-HPC/pylikwid"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
