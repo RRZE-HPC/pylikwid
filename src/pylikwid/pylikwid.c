@@ -3,6 +3,10 @@
 
 #include <likwid.h>
 
+#if !(LIKWID_MAJOR == 5 && LIKWID_RELEASE >= 4)
+#include <bstrlib.h>
+#endif
+
 #define PYSTR(str) (Py_BuildValue("s", str))
 #define PYINT(val) (Py_BuildValue("i", val))
 #define PYUINT(val) (Py_BuildValue("I", val))

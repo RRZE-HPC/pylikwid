@@ -23,10 +23,12 @@ jobs:
         sudo modprobe msr
     - name: Install
       run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install setuptools
-        python3 setup.py build_ext
+        python3 -m pip install --upgrade pip setuptools
         python3 -m pip install -e .
+    - name: Debug LIKWID libs
+      run: |
+        ls /usr/local/lib/liblik* /usr/local/lib/libbstr* || true
+        nm -D /usr/local/lib/liblikwid.so | grep bdata || true
     - name: Test
       run: |
         export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
@@ -36,7 +38,8 @@ jobs:
         ./tests/testaffinity.py
     - name: Build package
       run: |
-        python setup.py build sdist
+        python3 -m pip install build
+        python3 -m build
     - name: Publish to PyPI
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@master
