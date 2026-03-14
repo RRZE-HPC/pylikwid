@@ -135,13 +135,36 @@ def get_include_dirs():
         include_dirs.append(likwid_subdir)
     return include_dirs
 
+def get_sources():
+    sources = ["src/pylikwid/pylikwid.c"]
+
+    # bstrlib was added directly into 5.4 and is only needed for older versions
+    lib = ctypes.CDLL(os.path.join(LIKWID_LIBPATH, "liblikwid.so"))
+    lib.likwid_getMajorVersion.restype = ctypes.c_int
+    lib.likwid_getMinorVersion.restype = ctypes.c_int
+    major = lib.likwid_getMajorVersion()
+    release = lib.likwid_getMinorVersion()
+
+    if not (major == 5 and release >= 4):
+        for candidate in [
+            os.path.join(LIKWID_INCPATH, "bstrlib.c"),
+            "/usr/local/include/bstrlib.c",
+            "/usr/include/bstrlib.c",
+        ]:
+            if os.path.exists(candidate):
+                print(f"Adding bstrlib from {candidate} (LIKWID {major}.{release})")
+                sources.append(candidate)
+                break
+
+    return sources
+
 pylikwid = Extension("pylikwid.pylikwid",
                      include_dirs=get_include_dirs(),
                      libraries=get_libraries(),
                      library_dirs=[LIKWID_LIBPATH],
                      runtime_library_dirs=[LIKWID_LIBPATH],
                      extra_compile_args=get_extra_compile_args(),
-                     sources = ["src/pylikwid/pylikwid.c"],
+                     sources=get_sources(),
                      py_limited_api=True,
 )
 
