@@ -1,14 +1,7 @@
+import glob
 import os, os.path, glob, re, sys
-from distutils.core import setup, Extension
-
-
-# Utility function to read the README.md file.
-# Used for the long_description.  It"s nice, because now 1) we have a top level
-# README.md file and 2) it"s easier to type in the README.md file than to put a raw
-# string in below ...
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
-
+from setuptools import setup, Extension, find_packages
+import ctypes
 
 ver_regex = re.compile(r"so.(\d+)[.]*(\d*)")
 
@@ -108,58 +101,81 @@ def get_extra_compile_args():
     if os.environ.get("LIKWID_NVMON") not in (None, "0"):
         extra_args.append("-DLIKWID_NVMON")
 
-    # Add likwid version definitions from likwid.h.
-    likwid_header_path = f"{LIKWID_INCPATH}/likwid.h"
-    with open(likwid_header_path) as f:
-        for line in f:
-            if not line.startswith("#define LIKWID_VERSION"):
-                continue
-            major, release, minor = line.split()[-1].strip('"').split(".")
-            extra_args.extend([
-                f"-DLIKWID_MAJOR={major}",
-                f"-DLIKWID_RELEASE={release}",
-                f"-DLIKWID_MINOR={minor}",
-            ])
-            break
+    # Query version directly from the library using the exported symbols
+    libpath = os.path.join(LIKWID_LIBPATH, "liblikwid.so")
+    lib = ctypes.CDLL(libpath)
+    lib.likwid_getMajorVersion.restype = ctypes.c_int
+    lib.likwid_getMinorVersion.restype = ctypes.c_int
+    lib.likwid_getBugfixVersion.restype = ctypes.c_int
 
+    major = lib.likwid_getMajorVersion()
+    release = lib.likwid_getMinorVersion()
+    minor = lib.likwid_getBugfixVersion()
+
+    extra_args.extend([
+        f"-DLIKWID_MAJOR={major}",
+        f"-DLIKWID_RELEASE={release}",
+        f"-DLIKWID_MINOR={minor}",
+    ])
     return extra_args
 
+def get_libraries():
+    libs = [LIKWID_LIB]
+    # bstrlib is bundled into liblikwid on some installs but separate on others
+    bstrlib = glob.glob(os.path.join(LIKWID_LIBPATH, "libbstr*.so*"))
+    if bstrlib:
+        libs.append("bstr")
+    return libs
 
-pylikwid = Extension("pylikwid",
-                     include_dirs=[LIKWID_INCPATH],
-                     libraries=[LIKWID_LIB],
+
+def get_include_dirs():
+    include_dirs = ["src/pylikwid", LIKWID_INCPATH]
+    likwid_subdir = os.path.join(LIKWID_INCPATH, "likwid")
+    if os.path.isdir(likwid_subdir):
+        include_dirs.append(likwid_subdir)
+    return include_dirs
+
+def get_sources():
+    sources = ["src/pylikwid/pylikwid.c"]
+
+    # bstrlib was added directly into 5.4 and is only needed for older versions
+    lib = ctypes.CDLL(os.path.join(LIKWID_LIBPATH, "liblikwid.so"))
+    lib.likwid_getMajorVersion.restype = ctypes.c_int
+    lib.likwid_getMinorVersion.restype = ctypes.c_int
+    major = lib.likwid_getMajorVersion()
+    release = lib.likwid_getMinorVersion()
+
+    if not (major == 5 and release >= 4):
+        for candidate in [
+            os.path.join(LIKWID_INCPATH, "bstrlib.c"),
+            "/usr/local/include/bstrlib.c",
+            "/usr/include/bstrlib.c",
+        ]:
+            if os.path.exists(candidate):
+                print(f"Adding bstrlib from {candidate} (LIKWID {major}.{release})")
+                sources.append(candidate)
+                break
+
+    return sources
+
+pylikwid = Extension("pylikwid.pylikwid",
+                     include_dirs=get_include_dirs(),
+                     libraries=get_libraries(),
                      library_dirs=[LIKWID_LIBPATH],
+                     runtime_library_dirs=[LIKWID_LIBPATH],
                      extra_compile_args=get_extra_compile_args(),
-                     sources=["pylikwid.c"])
+                     sources=get_sources(),
+                     py_limited_api=True,
+)
 
 setup(
     name="pylikwid",
     version="0.4.2",
-    author="Thomas Roehl",
+    author="Thomas Gruber",
     author_email="thomas.roehl@googlemail.com",
-    description="A Python module to access the function of the LIKWID library",
-    long_description=read("README.rst"),
+    description="A Python module to access the functions of the LIKWID library",
     license="GPLv2",
-    keywords="hpc performance benchmark analysis",
-    url="https://github.com/RRZE-HPC/pylikwid",
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Intended Audience :: Developers",
-        "Intended Audience :: Science/Research",
-        "Topic :: Scientific/Engineering",
-        "Topic :: Software Development",
-        "Topic :: Utilities",
-        "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
-    ],
-    package_data={
-        "pylikwid": ["pylikwid.c", "README.rst", "LICENSE"],
-        "tests": ["tests/*.py"],
-    },
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
     ext_modules=[pylikwid],
 )

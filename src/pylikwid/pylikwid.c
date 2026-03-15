@@ -3,6 +3,10 @@
 
 #include <likwid.h>
 
+#if !(LIKWID_MAJOR == 5 && LIKWID_RELEASE >= 4)
+#include <bstrlib.h>
+#endif
+
 #define PYSTR(str) (Py_BuildValue("s", str))
 #define PYINT(val) (Py_BuildValue("i", val))
 #define PYUINT(val) (Py_BuildValue("I", val))
@@ -245,13 +249,13 @@ likwid_hpmmode(PyObject *self, PyObject *args)
 {
     int mode;
     if (!PyArg_ParseTuple(args, "i", &mode))
-        return Py_False;
+        Py_RETURN_FALSE;
     if ((mode == ACCESSMODE_DIRECT) || (mode == ACCESSMODE_DAEMON))
     {
         HPMmode(mode);
-        return Py_True;
+        Py_RETURN_TRUE;
     }
-    return Py_False;
+    Py_RETURN_FALSE;
 }
 
 static PyObject *
@@ -261,9 +265,9 @@ likwid_hpminit(PyObject *self, PyObject *args)
     if (err == 0)
     {
         access_initialized = 1;
-        return Py_True;
+        Py_RETURN_TRUE;
     }
-    return Py_False;
+    Py_RETURN_FALSE;
 }
 
 static PyObject *
@@ -298,28 +302,28 @@ static PyObject *
 likwid_initconfiguration(PyObject *self, PyObject *args)
 {
     if (config_initialized)
-        return Py_True;
+        Py_RETURN_TRUE;
     int ret = init_configuration();
     if (ret == 0)
     {
         config_initialized = 1;
-        return Py_True;
+        Py_RETURN_TRUE;
     }
-    return Py_False;
+    Py_RETURN_FALSE;
 }
 
 static PyObject *
 likwid_destroyconfiguration(PyObject *self, PyObject *args)
 {
     if (!config_initialized)
-        return Py_False;
+        Py_RETURN_FALSE;
     int ret = destroy_configuration();
     if (ret == 0)
     {
         config_initialized = 0;
-        return Py_True;
+        Py_RETURN_TRUE;
     }
-    return Py_False;
+    Py_RETURN_FALSE;
 }
 
 static PyObject *
@@ -355,13 +359,13 @@ likwid_setgrouppath(PyObject *self, PyObject *args)
     int ret = 0;
     char* grouppath;
     if (!PyArg_ParseTuple(args, "s", &grouppath))
-        return Py_False;
+        Py_RETURN_FALSE;
     ret = config_setGroupPath(grouppath);
     if (ret == 0)
     {
-        return Py_True;
+        Py_RETURN_TRUE;
     }
-    return Py_False;
+    Py_RETURN_FALSE;
 }
 
 /*
@@ -377,9 +381,9 @@ likwid_inittopology(PyObject *self, PyObject *args)
     if (ret == 0)
     {
         topo_initialized = 1;
-        return Py_True;
+        Py_RETURN_TRUE;
     }
-    return Py_False;
+    Py_RETURN_FALSE;
 }
 
 static PyObject *

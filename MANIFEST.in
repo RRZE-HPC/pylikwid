@@ -1,4 +1,4 @@
 include LICENSE
 include README.rst
-include pylikwid.c
+include src/pylikwid/pylikwid.c
 include tests/*.py
