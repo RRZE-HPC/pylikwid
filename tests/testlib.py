@@ -15,7 +15,11 @@ EVENTSET = "INSTR_RETIRED_ANY:FIXC0"
 @pytest.fixture(scope="module")
 def perfmon():
     err = pylikwid.init(CPUS)
-    assert err == 0, f"Cannot initialize LIKWID perfmon: err={err}"
+    if err != 0:
+        pytest.skip(
+            f"LIKWID perfmon init failed (err={err}); "
+            "requires root or likwid-accessD with appropriate permissions"
+        )
     yield
     pylikwid.finalize()
 
