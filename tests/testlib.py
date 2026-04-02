@@ -1,36 +1,41 @@
-#!/usr/bin/env python
+import os
 
-import sys
+import pytest
 import pylikwid
 
-liste = []
-cpus = [0,1]
-eventset = "INSTR_RETIRED_ANY:FIXC0"
+pytestmark = pytest.mark.skipif(
+    not os.path.exists("/dev/cpu/0/msr"),
+    reason="MSR device not available (run: sudo modprobe msr)",
+)
 
-err = pylikwid.init(cpus)
-if err > 0:
-    print("Cannot initialize LIKWID")
-    sys.exit(1)
-group = pylikwid.addeventset(eventset)
-if group >= 0:
-    print("Eventset {} added with ID {}".format(eventset, group,))
-else:
-    print("Failed to add eventset {}".format(eventset))
-    sys.exit(1)
-err = pylikwid.setup(group)
-if err < 0:
-    print("Setup of group {} failed".format(group))
-    sys.exit(1)
-err = pylikwid.start()
-if err < 0:
-    print("Start of group {} failed".format(group))
-    sys.exit(1)
-for i in range(0,1000000):
-    liste.append(i)
-err = pylikwid.stop()
-if err < 0:
-    print("Stop of group {} failed".format(group))
-    sys.exit(1)
-for thread in range(0,len(cpus)):
-    print("Result CPU {} : {}".format(cpus[thread], pylikwid.getresult(group,0,thread)))
-pylikwid.finalize()
+CPUS = [0, 1]
+EVENTSET = "INSTR_RETIRED_ANY:FIXC0"
+
+
+@pytest.fixture(scope="module")
+def perfmon():
+    err = pylikwid.init(CPUS)
+    assert err == 0, f"Cannot initialize LIKWID perfmon: err={err}"
+    yield
+    pylikwid.finalize()
+
+
+def test_addeventset(perfmon):
+    gid = pylikwid.addeventset(EVENTSET)
+    assert gid >= 0, f"Failed to add eventset {EVENTSET}"
+
+
+def test_measurement_cycle(perfmon):
+    gid = pylikwid.addeventset(EVENTSET)
+    assert gid >= 0
+
+    assert pylikwid.setup(gid) >= 0
+    assert pylikwid.start() >= 0
+
+    result = list(range(1_000_000))
+
+    assert pylikwid.stop() >= 0
+
+    for thread in range(len(CPUS)):
+        val = pylikwid.getresult(gid, 0, thread)
+        assert val >= 0

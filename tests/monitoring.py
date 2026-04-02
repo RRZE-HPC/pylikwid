@@ -53,7 +53,7 @@ run = True
 try:
     while run:
         for grp in groups:
-            if not gids.has_key(grp):
+            if grp not in gids:
                 gid = pylikwid.addeventset(grp)
                 if gid < 0:
                     print('Failed to add group {} to LIKWID perfmon module'.format(grp))

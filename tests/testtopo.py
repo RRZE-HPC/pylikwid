@@ -1,22 +1,33 @@
-#!/usr/bin/env python
-
+import pytest
 import pylikwid
 
-pylikwid.inittopology()
-infodict = pylikwid.getcpuinfo()
-for k in infodict:
-    print("{}: {}".format(k, infodict[k]))
-topodict = pylikwid.getcputopology()
-for k in topodict:
-    if not isinstance(topodict[k], dict):
-        print("{}: {}".format(k, topodict[k]))
-print()
-print("CPU topology:")
-print("ID\tCore\tThread\tPackage")
-for t in topodict["threadPool"]:
-    print("{}\t{}\t{}\t{}".format(topodict["threadPool"][t]["apicId"],
-                                  topodict["threadPool"][t]["coreId"],
-                                  topodict["threadPool"][t]["threadId"],
-                                  topodict["threadPool"][t]["packageId"]))
 
-pylikwid.finalizetopology()
+@pytest.fixture(scope="module")
+def topology():
+    pylikwid.inittopology()
+    topo = pylikwid.getcputopology()
+    yield topo
+    pylikwid.finalizetopology()
+
+
+def test_getcpuinfo(topology):
+    info = pylikwid.getcpuinfo()
+    assert isinstance(info, dict)
+    assert len(info) > 0
+
+
+def test_getcputopology_has_threadpool(topology):
+    assert "threadPool" in topology
+
+
+def test_getcputopology_has_threads(topology):
+    assert len(topology["threadPool"]) > 0
+
+
+def test_threadpool_entries(topology):
+    for t in topology["threadPool"]:
+        entry = topology["threadPool"][t]
+        assert "apicId" in entry
+        assert "coreId" in entry
+        assert "threadId" in entry
+        assert "packageId" in entry
