@@ -28,6 +28,7 @@ def test_addeventset(perfmon):
     gid = pylikwid.addeventset(EVENTSET)
     if gid < 0:
         pytest.skip(f"Event set {EVENTSET!r} not supported on this architecture")
+    print(f"Eventset {EVENTSET} added with ID {gid}")
 
 
 def test_measurement_cycle(perfmon):
@@ -45,3 +46,4 @@ def test_measurement_cycle(perfmon):
     for thread in range(len(CPUS)):
         val = pylikwid.getresult(gid, 0, thread)
         assert val >= 0
+        print(f"Result CPU {CPUS[thread]} : {val}")

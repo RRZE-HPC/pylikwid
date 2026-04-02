@@ -15,3 +15,4 @@ def test_pinprocess_and_getprocessorid(topology):
         cpu = topology["threadPool"][t]["apicId"]
         pylikwid.pinprocess(cpu)
         assert pylikwid.getprocessorid() == cpu
+        print(f"Running on CPU {pylikwid.getprocessorid()}")
