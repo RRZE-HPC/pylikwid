@@ -60,6 +60,9 @@ Marker API
    command line, this function performs no operation.
 -  ``pylikwid.markerreset(regiontag)``: Reset the values stored using the region
    name ``regiontag``. On success, 0 is returned.
+-  ``@pylikwid.profile``: Decorator that wraps a function in a LIKWID marker
+   region. By default, the function name is used as the region name. It can
+   also be called with a custom name: ``@pylikwid.profile(region_name="work")``.
 -  ``pylikwid.markerclose()``: Close the connection to the LIKWID Marker API
    and write out measurement data to file. This file will be evaluated
    by ``likwid-perfctr``.
