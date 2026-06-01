@@ -1,18 +1,18 @@
-#!/usr/bin/env python
-
+import pytest
 import pylikwid
 
-def do_work():
-    l = []
-    for i in range(1000000):
-        l += [i]
-    print("Running on CPU {}".format(pylikwid.getprocessorid()))
+
+@pytest.fixture(scope="module")
+def topology():
+    pylikwid.inittopology()
+    topo = pylikwid.getcputopology()
+    yield topo
+    pylikwid.finalizetopology()
 
 
-pylikwid.inittopology()
-cputopo = pylikwid.getcputopology()
-for t in cputopo["threadPool"]:
-    pylikwid.pinprocess(cputopo["threadPool"][t]["apicId"])
-    do_work()
-
-pylikwid.finalizetopology()
+def test_pinprocess_and_getprocessorid(topology):
+    for t in topology["threadPool"]:
+        cpu = topology["threadPool"][t]["apicId"]
+        pylikwid.pinprocess(cpu)
+        assert pylikwid.getprocessorid() == cpu
+        print(f"Running on CPU {pylikwid.getprocessorid()}")

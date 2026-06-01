@@ -24,7 +24,7 @@ jobs:
     - name: Install
       run: |
         python3 -m pip install --upgrade pip setuptools
-        python3 -m pip install -e .
+        python3 -m pip install -e ".[test]"
     - name: Debug LIKWID libs
       run: |
         ls /usr/local/lib/liblik* /usr/local/lib/libbstr* || true
@@ -33,9 +33,7 @@ jobs:
       run: |
         export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
         python3 -c "import pylikwid"
-        ./tests/testtopo.py
-        ./tests/testpin.py
-        ./tests/testaffinity.py
+        python3 -m pytest tests/ -v
     - name: Build package
       run: |
         python3 -m pip install build

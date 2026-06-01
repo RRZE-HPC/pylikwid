@@ -38,3 +38,7 @@ urls.Homepage = "https://github.com/RRZE-HPC/pylikwid"
 packages = [ "pylikwid" ]
 package-dir = { "" = "src" }
 
+[tool.pytest.ini_options]
+testpaths = [ "tests" ]
+python_files = [ "test*.py" ]
+

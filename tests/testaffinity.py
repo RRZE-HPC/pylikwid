@@ -1,26 +1,39 @@
-#!/usr/bin/env python
-
+import pytest
 import pylikwid
 
-def int_join(l, sep):
-    if l and len(l) > 0:
-        return sep.join([str(x) for x in l])
-    return "\"\""
 
-aff = pylikwid.initaffinity()
+@pytest.fixture(scope="module")
+def affinity():
+    aff = pylikwid.initaffinity()
+    yield aff
+    pylikwid.finalizeaffinity()
 
-for k in aff:
-    if isinstance(aff[k], int):
-        print("{}: {}".format(k, aff[k]))
-print("")
 
-for d in aff["domains"]:
-    print("Domain {}:".format(aff["domains"][d]["tag"]))
-    print("\t"+int_join(aff["domains"][d]["processorList"], " "))
-    print("")
+def test_initaffinity_returns_dict(affinity):
+    assert isinstance(affinity, dict)
+    for k in affinity:
+        if isinstance(affinity[k], int):
+            print(f"{k}: {affinity[k]}")
 
-for sel in ["S0:0-3", "N:3-1", "1,2,3", "E:N:2:1:2"]:
-    l = pylikwid.cpustr_to_cpulist(sel)
-    print("CPU string {} results in {}".format(sel, int_join(l, ",")))
 
-pylikwid.finalizeaffinity()
+def test_affinity_has_domains(affinity):
+    assert "domains" in affinity
+    assert len(affinity["domains"]) > 0
+
+
+def test_affinity_domain_entries(affinity):
+    for d in affinity["domains"]:
+        domain = affinity["domains"][d]
+        assert "tag" in domain
+        assert "processorList" in domain
+        print(f"Domain {domain['tag']}:")
+        print("\t" + " ".join(str(x) for x in domain["processorList"]))
+        print()
+
+
+@pytest.mark.parametrize("sel", ["S0:0-3", "N:3-1", "1,2,3", "E:N:2:1:2"])
+def test_cpustr_to_cpulist(affinity, sel):
+    result = pylikwid.cpustr_to_cpulist(sel)
+    assert isinstance(result, list)
+    assert len(result) > 0
+    print(f"CPU string {sel} results in {','.join(str(x) for x in result)}")
