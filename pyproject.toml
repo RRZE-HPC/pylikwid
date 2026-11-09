@@ -5,7 +5,7 @@ requires = [ "setuptools>=61" ]
 
 [project]
 name = "pylikwid"
-version = "0.4.2"
+version = "0.4.5"
 description = "A Python module to access the function of the LIKWID library"
 readme = "README.rst"
 keywords = [ "analysis", "benchmark", "hpc", "performance" ]
@@ -20,8 +20,6 @@ classifiers = [
   "Intended Audience :: Science/Research",
   "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
