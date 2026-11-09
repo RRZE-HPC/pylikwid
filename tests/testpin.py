@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import pytest
 import pylikwid
 

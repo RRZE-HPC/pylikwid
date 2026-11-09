@@ -19,7 +19,7 @@ jobs:
       run: |
         git clone https://github.com/RRZE-HPC/likwid.git
         cd likwid
-        make && sudo make install
+        make -j && sudo make install
         sudo modprobe msr
     - name: Install
       run: |
@@ -31,9 +31,9 @@ jobs:
       run: |
         export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
         python -c "import pylikwid"
-        ./tests/testtopo.py
-        ./tests/testpin.py
-        ./tests/testaffinity.py
+        python ./tests/testtopo.py
+        python ./tests/testpin.py
+        python ./tests/testaffinity.py
     - name: Build package
       run: |
         python setup.py build sdist
