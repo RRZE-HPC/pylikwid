@@ -7,11 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: [3.11, 3.12, 3.13, 3.14]
     
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v7
       name: Set up Python ${{ matrix.python-version }}
       with:
         python-version: ${{ matrix.python-version }}
@@ -23,21 +23,19 @@ jobs:
         sudo modprobe msr
     - name: Install
       run: |
-        python3 -m pip install --upgrade pip setuptools
-        python3 -m pip install -e ".[test]"
-    - name: Debug LIKWID libs
-      run: |
-        ls /usr/local/lib/liblik* /usr/local/lib/libbstr* || true
-        nm -D /usr/local/lib/liblikwid.so | grep bdata || true
+        python -m pip install --upgrade pip
+        python setup.py build_ext
+        python -m pip install -e .
     - name: Test
       run: |
         export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-        python3 -c "import pylikwid"
-        python3 -m pytest tests/ -v
+        python -c "import pylikwid"
+        ./tests/testtopo.py
+        ./tests/testpin.py
+        ./tests/testaffinity.py
     - name: Build package
       run: |
-        python3 -m pip install build
-        python3 -m build
+        python setup.py build sdist
     - name: Publish to PyPI
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@master
